@@ -190,40 +190,6 @@ public static class ExtensionsServices {
    #endregion
    */
 
-   #region AddSwaggerGenSettings
-   public static IServiceCollection AddSwaggerSettings(
-      this IServiceCollection services,
-      string title,
-      string version,
-      string description
-   ) {
-      services.AddSwaggerGen(c => {
-         // 1) Set up your document info
-         c.SwaggerDoc(version, new OpenApiInfo {
-            Title       = title,
-            Version     = version,
-            Description = description
-         });
-
-         // 2) Tell Swashbuckle how to render Guid  →  string(uuid)
-         c.MapType<Guid>(() => new OpenApiSchema {
-            Type   = "string",
-            Format = "uuid"
-         });
-
-         // 3) And Guid? → nullable string(uuid)
-         c.MapType<Guid?>(() => new OpenApiSchema {
-            Type     = "string",
-            Format   = "uuid",
-            Nullable = true
-         });
-
-         // …any other customizations you need…
-      });
-
-      return services;
-   }
-   #endregion
 }
 
 internal sealed class BearerSecuritySchemeTransformer(IAuthenticationSchemeProvider authenticationSchemeProvider)

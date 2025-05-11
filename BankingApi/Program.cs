@@ -28,10 +28,6 @@ public class Program {
       builder.Services.AddHttpLogging(opts =>
          opts.LoggingFields = HttpLoggingFields.All);
       
-      // add ProblemDetails, see https://tools.ietf.org/html/rfc7807
-      builder.Services.AddProblemDetails();
-      
-      
       // add serialize/deserialize Guid/Guid?  to JSON
       builder.Services.ConfigureHttpJsonOptions(options => {
          options.SerializerOptions.Converters.Add(new NullableGuidConverter());
