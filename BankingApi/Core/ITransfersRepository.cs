@@ -2,11 +2,11 @@
 namespace BankingApi.Core; 
 public interface ITransfersRepository: IBaseRepository<Transfer,Guid> {
    
-   Task<IEnumerable<Transfer>> SelectByAccountIdAsync(
+   Task<IEnumerable<Transfer>> FilterByAccountIdJoinTransactionsAsync(
       Guid accountId,
       CancellationToken ctToken = default
    );
-   Task<IEnumerable<Transfer>> SelectByBeneficiaryIdAsync(
+   Task<IEnumerable<Transfer>> FilterByBeneficiaryIdJoinTransactionsAsync(
       Guid beneficiaryId,
       CancellationToken ctToken = default
    );

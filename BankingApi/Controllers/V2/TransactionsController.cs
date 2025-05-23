@@ -20,6 +20,17 @@ public class TransactionsController(
    ITransactionsRepository transactionsRepository
 ): ControllerBase {
    
+   [HttpGet("transactions")]
+   [EndpointSummary("Get all transactions")]
+   [ProducesResponseType(StatusCodes.Status200OK)]
+   public async Task<ActionResult<IEnumerable<TransactionDto>>> GetAllAsync(
+      CancellationToken ctToken = default
+   ) {
+      var transactions = await transactionsRepository.SelectAsync(false, ctToken);
+      return Ok(transactions.Select(transaction => transaction.ToTransactionDto()));
+   }
+   
+   
    [HttpGet("accounts/{accountId:guid}/transactions/listitems")]
    [EndpointSummary("Get transactionListItemDtos of an account by accountId and time intervall start to end")]
    [ProducesResponseType(StatusCodes.Status200OK)]

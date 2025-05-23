@@ -19,6 +19,17 @@
     ITransfersRepository transfersRepository
  ) : ControllerBase {
     
+    [HttpGet("transfers")]
+    [EndpointSummary("Get all transfers")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<TransferDto>>> GetAllAsync(
+       CancellationToken ctToken = default
+    ) {
+       var transfers = await transfersRepository.SelectAsync(false, ctToken);
+       return Ok(transfers.Select(transfer => transfer.ToTransferDto()));
+    }
+    
+    
      [HttpGet("accounts/{accountId:guid}/transfers")]
      [EndpointSummary("Get transfers of an account by accountId")]
      [ProducesResponseType(StatusCodes.Status200OK)]
@@ -32,7 +43,7 @@
            return BadRequest("Bad request: accountId does not exist.");
      
         var transfers =
-           await transfersRepository.SelectByAccountIdAsync(accountId, ctToken);
+           await transfersRepository.FilterByAccountIdJoinTransactionsAsync(accountId, ctToken);
         
         return Ok(transfers.Select(transfer => transfer.ToTransferDto()));
      }

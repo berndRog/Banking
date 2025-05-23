@@ -55,17 +55,19 @@ public class BeneficiariesControllerTest: BaseControllerTest {
    }
    
    
-   // [Fact]
-   // public async Task PostTest() {
-   //    // Arrange
-   //    await _arrangeTest.OwnersWithAccountsAsync(_seed);
-   //    var beneficiary1Dto = _seed.Beneficiary1.ToBeneficiaryDto();
-   //    var expected = beneficiary1Dto with { AccountId = _seed.Account1.Id };
-   //    // Act
-   //    var actionResult
-   //       = await _beneficiariesController.CreateAsync(_seed.Account1.Id, beneficiary1Dto);
-   //    // Assert
-   //    THelper.IsCreated(actionResult, expected);
-   // }
+   [Fact]
+   public async Task CreateBeneficiaryTest() {
+       // Arrange
+       await _arrangeTest.OwnersWithAccountsAsync(_seed);
+       var beneficiary1Dto = _seed.Beneficiary1.ToBeneficiaryDto();
+       var expected = beneficiary1Dto with { AccountId = _seed.Account1.Id };
+       
+       // Act
+       var actionResult
+          = await _beneficiariesController.CreateAsync(_seed.Account1.Id, beneficiary1Dto);
+       
+       // Assert
+       THelper.IsCreated(actionResult, expected);
+    }
    
 }

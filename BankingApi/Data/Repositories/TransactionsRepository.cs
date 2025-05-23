@@ -1,17 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Linq.Expressions;
 using BankingApi.Core;
 using BankingApi.Core.DomainModel.Entities;
 using BankingApi.Core.Dtos;
 using Microsoft.EntityFrameworkCore;
-[assembly: InternalsVisibleTo("BankingApiTest")]
 namespace BankingApi.Data.Repositories;
-internal class TransactionsRepository(
+public class TransactionsRepository(
    DataContext dataContext
 ): ABaseRepository<Transaction,Guid>(dataContext), ITransactionsRepository {
    
@@ -31,7 +24,7 @@ internal class TransactionsRepository(
       return transactions;
    }
 
-   public async Task<IEnumerable<Transaction>> SelectByTransferIdAsync(
+   public async Task<IEnumerable<Transaction>> FilterByTransferIdAsync(
       Guid transferId,
       CancellationToken ctToken = default
    ){

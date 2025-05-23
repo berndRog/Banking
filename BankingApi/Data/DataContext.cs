@@ -5,9 +5,14 @@ using BankingApi.Core.Misc;
 using Microsoft.EntityFrameworkCore;
 namespace BankingApi.Data;
 
-public class DataContext(
-   DbContextOptions<DataContext> options
-) : DbContext(options), IDataContext {
+public class DataContext: DbContext, IDataContext {
+
+ // public class DataContext(
+ //    DbContextOptions<DataContext> options
+ // ) : DbContext(options), IDataContext {
+ //   
+
+   //private readonly IConfiguration _configuration;
    private ILogger<DataContext>? _logger;
 
    public DbSet<Owner> Owners => Set<Owner>(); // call to a method, not a field 
@@ -17,6 +22,16 @@ public class DataContext(
    public DbSet<Transaction> Transactions => Set<Transaction>();
    public DbSet<Image> Images => Set<Image>();
 
+   
+   public DataContext(
+      DbContextOptions<DataContext> options
+   ) : base(options) {
+//      Console.WriteLine($"....: DatabaseConfiguration: Sqlite foreign keys on");
+//      Database.EnsureCreated();
+//      Database.ExecuteSqlRaw("PRAGMA foreign_keys = ON;");
+   }
+   
+   
    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
       // https://learn.microsoft.com/de-de/ef/core/logging-events-diagnostics/simple-logging
       var loggerFactory = LoggerFactory.Create(builder => {
@@ -36,40 +51,16 @@ public class DataContext(
          .EnableDetailedErrors();
    }
 
+   /*
    protected override void OnModelCreating(ModelBuilder modelBuilder) {
       
       base.OnModelCreating(modelBuilder);
+
+
+      
       //
       // PROPERTY CONFIGURATION
       //
-
-      // UTC for DateTime
-      modelBuilder.Entity<Owner>(e => {
-         e.Property(e => e.Birthdate)
-            .HasConversion(
-               v => v, // to UTC before saving
-               v => DateTime.SpecifyKind(v, DateTimeKind.Utc)); // set as UTC when loading
-      });
-      modelBuilder.Entity<Transfer>(e => {
-         e.Property(e => e.Date)
-            .HasConversion(
-               v => v, // to UTC before saving
-               v => DateTime.SpecifyKind(v, DateTimeKind.Utc)); // set as UTC when loading
-      });
-      modelBuilder.Entity<Transaction>(entity => {
-         entity.Property(e => e.Date)
-            .HasConversion(
-               v => v, // to UTC before saving
-               v => DateTime.SpecifyKind(v, DateTimeKind.Utc)); // set as UTC when loading
-      });
-      modelBuilder.Entity<Image>(entity => {
-         entity.Property(e => e.Updated)
-            .HasConversion(
-               v => v, // to UTC before saving
-               v => DateTime.SpecifyKind(v, DateTimeKind.Utc)); // set as UTC when loading
-      });
-
-      // Owners
       modelBuilder.Entity<Owner>(e => {
          e.ToTable("Owners"); // tablename Owners
          e.HasKey(owner => owner.Id); // primary key
@@ -77,130 +68,113 @@ public class DataContext(
             .ValueGeneratedNever(); // and should never be gerated by DB  
          e.Property(owner => owner.Name).HasMaxLength(100);
          e.Property(owner => owner.Email).HasMaxLength(200);
+         e.Property(e => e.Birthdate)
+            .HasConversion(
+               v => v, // to UTC before saving
+               v => DateTime.SpecifyKind(v, DateTimeKind.Utc)); // set as UTC when loading
       });
-      /*
-            // Accounts
-            modelBuilder.Entity<Account>(e => {
-               e.ToTable("Accounts");
-               e.HasKey(account => account.Id);
-               e.Property(account => account.Id).ValueGeneratedNever();
-               e.Property(account => account.Iban).HasMaxLength(32);
-            });
-            // Beneficiaries
-            modelBuilder.Entity<Beneficiary>(e => {
-               e.ToTable("Beneficiaries");
-               e.HasKey(beneficiary => beneficiary.Id);
-               e.Property(beneficiary => beneficiary.Id).ValueGeneratedNever();
-               e.Property(beneficiary => beneficiary.Name).HasMaxLength(64);
-               e.Property(beneficiary => beneficiary.Iban).HasMaxLength(32);
-            });
-            // Transfers
-            modelBuilder.Entity<Transfer>(e => {
-               e.ToTable("Transfers");
-               e.HasKey(transfer => transfer.Id);
-               e.Property(transfer => transfer.Id).ValueGeneratedNever();
-            });
-            // Transactions
-            modelBuilder.Entity<Transaction>(e => {
-               e.ToTable("Transactions");
-               e.HasKey(transaction => transaction.Id);
-               e.Property(transaction => transaction.Id).ValueGeneratedNever();
-            });
+      
+      modelBuilder.Entity<Account>(e => {
+         e.ToTable("Accounts");
+         e.HasKey(account => account.Id);
+         e.Property(account => account.Id) 
+            .ValueGeneratedNever();        // Id should never be gerated by DB  
+         e.Property(account => account.Id).ValueGeneratedNever();
+         e.Property(account => account.Iban).HasMaxLength(32);
+      });
 
-            //
-            // RELATIONS
-            //
-            // Owner [1] <--> [0..*] Account One-to-Many
-            // -------------------------------------------
-            // Either
-            // modelBuilder.Entity<Owner>(e => {
-            //    e.HasMany(owner => owner.Accounts)     // Owner   --> Account [0..*]
-            //       .WithOne(account => account.Owner)  // Account --> Owner   [1]
-            //       .HasForeignKey(account => account.OwnerId) // Fk in Account
-            //       .HasPrincipalKey(owner => owner.Id) // Pk in Owner
-            //       .OnDelete(DeleteBehavior.Cascade)
-            //       .IsRequired();
-            //    e.Navigation(onwer => onwer.Accounts); // Navigation property
-            // });
-            //Or
-            modelBuilder.Entity<Account>(e => {
-               e.HasOne(account => account.Owner)      // Account --> Owner   [1]
-                  .WithMany(owner => owner.Accounts)   // Owner   --> Account [0..*]
-                  .HasForeignKey(account => account.OwnerId) // Fk in Account
-                  .HasPrincipalKey(owner => owner.Id)        // Pk in Owner
-                  .OnDelete(DeleteBehavior.Cascade)
-                  .IsRequired();
-               e.Navigation(account => account.Owner); // Navigation property
-            });
-            //
-            // Account [1] <--> [0..*] Beneficiaries  One-To-Many
-            // ---------------------------------------------------
-            // Either
-            // modelBuilder.Entity<Account>(e => {
-            //    e.HasMany(account => account.Beneficiaries) // Account    --> Beneficiary [0..*]
-            //       .WithOne()                               // Beneficiary --> Account not modelled
-            //       .HasForeignKey(beneficiary => beneficiary.AccountId) // Fk in Beneficiary
-            //       .HasPrincipalKey(account => account.Id)              // Pk in Account
-            //       .OnDelete(DeleteBehavior.Cascade)
-            //       .IsRequired();
-            //    e.Navigation(account => account.Beneficiaries); // Navigation property
-            // });
-            // Or
-            modelBuilder.Entity<Beneficiary>(e => {
-               e.HasOne<Account>(account => null)             // Beneficiary --> Account not modelled
-                  .WithMany(account => account.Beneficiaries) // Account     --> Beneficiary [0..*]
-                  .HasForeignKey(beneficiary => beneficiary.AccountId) // Fk in Beneficiary
-                  .HasPrincipalKey(account => account.Id)              // Pk in Account
-                  .OnDelete(DeleteBehavior.Cascade)
-                  .IsRequired();
-               //e.Navigation(beneficiary => beneficiary.Account); // no Navigation property
-            });
-            //
-            // Account [1] <--> [0..*] Transfers One-to-Many
-            // ----------------------------------------------
-            // Either
-            // modelBuilder.Entity<Account>(e => {
-            //    e.HasMany(account => account.Transfers)   // Account    --> Transfers [0..*]
-            //       .WithOne(transfer => transfer.Account) // Transfer   --> Account   [1]
-            //       .HasForeignKey(transfer => transfer.AccountId) // Fk in Transfer
-            //       .HasPrincipalKey(account => account.Id)        // Pk in Account
-            //       .OnDelete(DeleteBehavior.Cascade)
-            //       .IsRequired();
-            //    e.Navigation(account => account.Transfers); // Navigation property
-            // });
-            // Or
-            modelBuilder.Entity<Transfer>(e => {
-               e.HasOne(transfer => transfer.Account)     // Transfer --> Account [1]
-                  .WithMany(account => account.Transfers) // Account --> Transfer [0..*]
-                  .HasForeignKey(transfer => transfer.AccountId) // Fk in Transfer
-                  .HasPrincipalKey(account => account.Id)        // Pk in Account
-                  .OnDelete(DeleteBehavior.Cascade)
-                  .IsRequired(true);
-               e.Navigation(transfer => transfer.Account); // Navigation property
-            });
-            //
-            // Account [1] <--> [0..*] Transactions One-To-Many
-            // ------------------------------------------------
-            // Either
-            // modelBuilder.Entity<Account>(e => {
-            //    e.HasMany(account => account.Transactions)
-            //       .WithOne(transaction => transaction.Account)
-            //       .HasForeignKey(transaction => transaction.AccountId)
-            //       .HasPrincipalKey(account => account.Id)
-            //       .OnDelete(DeleteBehavior.Cascade)
-            //       .IsRequired();
-            //    e.Navigation(account => account.Transactions);
-            // });
-            // Or
-            modelBuilder.Entity<Transaction>(e => {
-               e.HasOne(transaction => transaction.Account) // Transaction --> Account [1]
-                  .WithMany(account => account.Transactions)
-                  .HasForeignKey(transaction => transaction.AccountId)
-                  .HasPrincipalKey(account => account.Id)
-                  .IsRequired(false);
-               e.Navigation(transaction => transaction.Account);
-            });
-            //
+      modelBuilder.Entity<Beneficiary>(e => {
+         e.ToTable("Beneficiaries");
+         e.HasKey(beneficiary => beneficiary.Id);
+         e.Property(beneficiary => beneficiary.Id)
+            .ValueGeneratedNever();        // Id and should never be gerated by DB  
+         e.Property(beneficiary => beneficiary.Id).ValueGeneratedNever();
+         e.Property(beneficiary => beneficiary.Name).HasMaxLength(64);
+         e.Property(beneficiary => beneficiary.Iban).HasMaxLength(32);
+      });
+      
+      modelBuilder.Entity<Transfer>(e => {
+         e.ToTable("Transfers");
+         e.HasKey(transfer => transfer.Id);
+         e.Property(beneficiary => beneficiary.Id)
+            .ValueGeneratedNever();        // Id and should never be gerated by DB  
+         e.Property(transfer => transfer.Id).ValueGeneratedNever();
+         e.Property(e => e.Date)
+            .HasConversion(
+               v => v, // to UTC before saving
+               v => DateTime.SpecifyKind(v, DateTimeKind.Utc)); // set as UTC when loading
+      });
+      
+      modelBuilder.Entity<Transaction>(e => {
+         e.ToTable("Transactions");
+         e.HasKey(transaction => transaction.Id);
+         e.Property(transaction => transaction.Id)
+            .ValueGeneratedNever();
+         e.Property(e => e.Date)
+            .HasConversion(
+               v => v, // to UTC before saving
+               v => DateTime.SpecifyKind(v, DateTimeKind.Utc)); // set as UTC when loading
+      });
+      
+      
+      modelBuilder.Entity<Image>(entity => {
+         entity.Property(e => e.Updated)
+            .HasConversion(
+               v => v, // to UTC before saving
+               v => DateTime.SpecifyKind(v, DateTimeKind.Utc)); // set as UTC when loading
+      });
+
+      //
+      // RELATIONS
+      //
+      // One-to-Many: Owner (1,1):(0..n] Account 
+      // -------------------------------------------
+      modelBuilder.Entity<Account>(e => {
+         e.HasOne(account => account.Owner)              // Account --> Owner   [1]
+            .WithMany(owner => owner.Accounts)           // Owner   --> Account [0..*]
+            .HasForeignKey(account => account.OwnerId)   // Fk in Account
+            .HasPrincipalKey(owner => owner.Id)          // Pk in Owner
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired();
+         e.Navigation(account => account.Owner);         // navigation property
+      });
+      //
+      // One-To-Many: Account (1,1):(0,n) Beneficiaries  
+      // ---------------------------------------------------
+      modelBuilder.Entity<Beneficiary>(e => {
+         e.HasOne<Account>(account => null)              // navigation property not modelled
+            .WithMany(account => account.Beneficiaries)  // Account     --> Beneficiary [0..*]
+            .HasForeignKey(beneficiary => beneficiary.AccountId) // Fk in Beneficiary
+            .HasPrincipalKey(account => account.Id)              // Pk in Account
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired();
+         //e.Navigation(beneficiary => beneficiary.Account); // no Navigation property
+      });
+
+      //
+      // One-to-Many: Account (1,1): (0,n) Transfers 
+      // ----------------------------------------------
+      modelBuilder.Entity<Transfer>(e => {
+         e.HasOne(transfer => transfer.Account)          // Transfer --> Account [1]
+            .WithMany(account => account.Transfers)      // Account --> Transfer [0..*]
+            .HasForeignKey(transfer => transfer.AccountId) // Fk in Transfer
+            .HasPrincipalKey(account => account.Id)        // Pk in Account
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired(true);
+         e.Navigation(transfer => transfer.Account);     // Navigation property
+      });
+      
+      // Account [1] <--> [0..*] Transactions One-To-Many
+      // ------------------------------------------------
+      modelBuilder.Entity<Transaction>(e => {
+         e.HasOne(transaction => transaction.Account) // Transaction --> Account [1]
+            .WithMany(account => account.Transactions)
+            .HasForeignKey(transaction => transaction.AccountId)
+            .HasPrincipalKey(account => account.Id)
+            .IsRequired(false);
+         e.Navigation(transaction => transaction.Account);
+      });
+      //
             // Transfer [--] <--> [0..1] Beneficiary
             // ------------------------------------
             modelBuilder.Entity<Transfer>(e => {
@@ -225,22 +199,22 @@ public class DataContext(
                   .OnDelete(DeleteBehavior.NoAction);
                e.Navigation(transaction => transaction.Transfer);
             });
-      */
+  
    }
-
+   */
+   
    public async Task<bool> SaveAllChangesAsync(
       string? text = null,
       CancellationToken ctToken = default
    ) {
       // log repositories before transfer to the database
-      // _logger?.LogInformation("\n{view}", ChangeTracker.DebugView.LongView);
+      _logger?.LogInformation("\n{view}", ChangeTracker.DebugView.LongView);
 
       // save all changes to the database, returns the number of rows affected
       var result = await SaveChangesAsync(ctToken);
 
       // log repositories after transfer to the database
       _logger?.LogInformation("SaveChanges {result}", result);
-
       _logger?.LogInformation("\n{view}", ChangeTracker.DebugView.LongView);
       return result > 0;
    }

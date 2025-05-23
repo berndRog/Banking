@@ -47,10 +47,10 @@ public class Account: IEntity<Guid> {
    }
    
    // Add transactions to accounts
-   public void AddTransactions(Transaction transaction, Transfer transfer){
+   public void AddTransactions(Transaction transaction, Transfer transfer, bool isDebit){
       
       // set account and Transfer to transaction
-      transaction.Set(this, transfer);
+      transaction.Set(this, transfer, isDebit);
       // add transaction to transfer
       transfer.Add(transaction);
       

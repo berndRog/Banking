@@ -7,6 +7,7 @@ public class Transfer: IEntity<Guid>   {
    public string Description { get; private set; } = string.Empty;
    public decimal Amount{ get; private set; }  // Amount < 0 -> Reverse SendMoney
    
+   // debit account
    // navigation property Transfer (0,n):(1,1) Account  
    public Account Account { get; private set; } = null!;
    public Guid AccountId { get; private set; } 

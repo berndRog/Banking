@@ -19,10 +19,9 @@ public class Owner: IEntity<Guid> {
       if(email != null)  Email = email;
    }
    
-   public void Update(string? name, DateTime? birthdate, string? email) {
-      if(name != null) Name = name;
-      if(birthdate.HasValue) Birthdate = birthdate.Value;
-      if(email != null ) Email = email;
+   public void Update(string? name, string? email) {
+      if(!string.IsNullOrEmpty(name)) Name = name;
+      if(!string.IsNullOrEmpty(email)) Email = email;
    } 
    
    public void AddAccount(Account account) {

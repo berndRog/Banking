@@ -493,13 +493,8 @@ public class Seed {
       Transaction transactionCredit
    ){
       accountDebit.AddTransfer(transfer, beneficiary);
-      if(beneficiary.Iban != accountCredit.Iban)
-         throw new Exception("Error in Seed SendMoney");
-
-      transactionDebit.Set(accountDebit, transfer, true);
-      transactionCredit.Set(accountCredit, transfer, false);
-      transactionDebit?.Account?.AddTransactions(transactionDebit, transfer);
-      transactionCredit?.Account?.AddTransactions(transactionCredit, transfer);
+      transactionDebit?.Account?.AddTransactions(transactionDebit, transfer, true);
+      transactionCredit?.Account?.AddTransactions(transactionCredit, transfer, false);
    }
 
    public void PrepareTest1(){ 
@@ -529,9 +524,9 @@ public class Seed {
       // AccountDebit
       Account1.AddBeneficiary(Beneficiary1);
       Account1.AddTransfer(Transfer1, Beneficiary1);
-      Account1.AddTransactions(Transaction1, Transfer1);
+      Account1.AddTransactions(Transaction1, Transfer1, true);
       // AccountCredit
-      Account6.AddTransactions(Transaction2, Transfer1);
+      Account6.AddTransactions(Transaction2, Transfer1, false);
 
       Transfer transfer = new(
          id: new Guid("90010000-0000-0000-0000-000000000000"),
@@ -553,9 +548,9 @@ public class Seed {
       
       // Reverse (Debit) - Lastschrift
       Account1.AddTransfer(transfer, Beneficiary1);
-      Account1.AddTransactions(transactionDebit, transfer);
+      Account1.AddTransactions(transactionDebit, transfer, true);
       // Reverse (Credit)  - Gutschrift     
-      Account6.AddTransactions(transactionCredit, transfer);
+      Account6.AddTransactions(transactionCredit, transfer, false);
    }
 
    public void Example1(){

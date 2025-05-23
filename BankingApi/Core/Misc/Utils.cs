@@ -11,8 +11,12 @@ public static class Utils {
       //"DEkk BBBB BBBB CCCC CCCC CC"
       if (iban != null) {
          iban = iban.Replace(" ", "").ToUpper();
-         if (iban.Length == 22) return iban;
+         if (iban.Length is >= 20 and <= 22) return iban;
       }
+      
+      throw new ArgumentException(
+         "Iban is not valid. It must be 20-22 characters long and contain only digits and letters.");
+      
       // if iban is not valid, create a new one
       var random = new Random();
       //     DEkk                           BBBB                    BBBB

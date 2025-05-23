@@ -1,4 +1,5 @@
-﻿using BankingApi.Core.DomainModel.Entities;
+﻿using System.Collections.Generic;
+using BankingApi.Core.DomainModel.Entities;
 using Xunit;
 namespace BankingApiTest.Core.DomainModel.Entities;
 public class AccountUt {
@@ -52,22 +53,6 @@ public class AccountUt {
       Assert.Equal(actualOwner, owner);
       Assert.Equal(actualOwnerId, owner.Id);
    }
-   /*
-   [Fact]
-   public void SetterUt(){
-      // Arrange
-      var owner = _seed.Owner1;
-      var actual = new Account();
-      // Act, Setter
-      actual.Balance = _seed.Account1.Balance;
-      actual.Owner = owner;
-      actual.OwnerId = owner.Id;
-      // Assert
-      actual.Balance.Should().Be(_seed.Account1.Balance);
-      actual.Owner.Should().Be(owner);
-      actual.OwnerId.Should().Be(owner.Id);
-   }
-   
    
    #region Account -> Beneficiaries   
    [Fact]
@@ -78,12 +63,11 @@ public class AccountUt {
          _seed.Beneficiary1, _seed.Beneficiary2
       };
       // Add
-      _seed.Account1.Add(_seed.Beneficiary1);
-      _seed.Account1.Add(_seed.Beneficiary2);
+      _seed.Account1.AddBeneficiary(_seed.Beneficiary1);
+      _seed.Account1.AddBeneficiary(_seed.Beneficiary2);
       // Assert
-      _seed.Account1.Beneficiaries.Should()
-         .HaveCount(2).And
-         .BeEquivalentTo(expected);
+      Assert.Equal(2, _seed.Account1.Beneficiaries.Count);
+      Assert.Equivalent(expected, _seed.Account1.Beneficiaries);
    }
    #endregion
 
@@ -94,13 +78,13 @@ public class AccountUt {
       _seed.InitAccounts().InitBeneficiaries();
       var expected = new List<Transfer>{ _seed.Transfer1 };
       // Add
-      _seed.Account1.Add(_seed.Transfer1, _seed.Beneficiary1);
+      _seed.Account1.AddTransfer(_seed.Transfer1, _seed.Beneficiary1);
       // Assert
-      _seed.Account1.Transfers.Should()
-         .HaveCount(1).And
-         .BeEquivalentTo(expected);
+      Assert.Equal(1, _seed.Account1.Transfers.Count);
+      Assert.Equivalent(expected, _seed.Account1.Transfers);
    }
    #endregion
+
 
    #region Accounts -> Transaction
    [Fact]
@@ -113,36 +97,38 @@ public class AccountUt {
       var transfer = _seed.Transfer1;
       var transactionDebit = _seed.Transaction1;
       var transactionCredit = _seed.Transaction2;
-      transactionDebit.Amount = -transfer.Amount;
-      transactionCredit.Amount = transfer.Amount;
+      
       // Act
-      accountDebit.Add(transfer, beneficiary);
-      accountDebit.Add(transactionDebit, transfer);
-      accountCredit.Add(transactionCredit, transfer);
+      accountDebit.AddTransfer(transfer, beneficiary);
+      accountDebit.AddTransactions(transactionDebit, transfer, true);
+      accountCredit.AddTransactions(transactionCredit, transfer, false);
+      
       // Assert
-      accountDebit.Balance.Should().Be(1755.0);
-      accountDebit.Transfers.Should().HaveCount(1);
-      accountDebit.Transactions.Should().HaveCount(1);
-      var actualDebit = accountDebit.Transactions[0];
-      actualDebit.Date.Should().Be(transfer.Date);
-      actualDebit.Amount.Should().Be(-transfer.Amount);
-      actualDebit.AccountId.Should().Be(accountDebit.Id);
-      actualDebit.Account?.Id.Should().Be(accountDebit.Id);
-      actualDebit.TransferId.Should().Be(transfer.Id); 
-      actualDebit.Transfer?.Id.Should().Be(transfer.Id);
-
-      accountCredit.Balance.Should().Be(3845.0);
-      accountCredit.Transfers.Should().HaveCount(0);
-      accountCredit.Transactions.Should().HaveCount(1);
-      var actualCredit = accountCredit.Transactions[0];
-      actualCredit.Date.Should().Be(transfer.Date);
-      actualCredit.Amount.Should().Be(transfer.Amount);
-      actualCredit.AccountId.Should().Be(accountCredit.Id);
-      actualCredit.Account?.Id.Should().Be(accountCredit.Id);
-      actualCredit.TransferId.Should().Be(transfer.Id);
-      actualCredit.Transfer?.Id.Should().Be(transfer.Id);
-
+      var actualTransfer = accountDebit.Transfers[0];
+      Assert.Equal(transfer.Id, actualTransfer.Id);
+      Assert.Equal(transfer.Date, actualTransfer.Date);
+      Assert.Equal(transfer.Description, actualTransfer.Description);
+      Assert.Equal(transfer.Amount, actualTransfer.Amount);
+      Assert.Equal(transfer.AccountId, actualTransfer.AccountId);
+      Assert.Equal(transfer.BeneficiaryId, actualTransfer.BeneficiaryId);
+      Assert.Equal(transfer.Transactions.Count, 2);
+      
+      
+      var actualTransactionDebit = accountDebit.Transactions[0];
+      Assert.Equal(transactionDebit.Id, actualTransactionDebit.Id);
+      Assert.Equal(transfer.Date,actualTransactionDebit.Date);
+      Assert.Equal(-transfer.Amount, actualTransactionDebit.Amount);
+      Assert.Equal(accountDebit.Id, actualTransactionDebit.AccountId);
+      Assert.Equal(transfer.Id, actualTransactionDebit.TransferId);
+      
+      var actualTransactionCredit = accountCredit.Transactions[0];
+      Assert.Equal(transactionCredit.Id, actualTransactionCredit.Id);
+      Assert.Equal(transfer.Date,actualTransactionCredit.Date);
+      Assert.Equal(transfer.Amount, actualTransactionCredit.Amount);
+      Assert.Equal(accountCredit.Id, actualTransactionCredit.AccountId);
+      Assert.Equal(transfer.Id, actualTransactionCredit.TransferId);
+      
    }
    #endregion
-   */
+
 }

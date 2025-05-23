@@ -68,9 +68,9 @@ public class UseCasesTransfer(
          accountDebit.AddTransfer(transfer, beneficiary);
          
          // add transaction to debit account (Lastschrift)
-         accountDebit.AddTransactions(transactionDebit, transfer);
+         accountDebit.AddTransactions(transactionDebit, transfer, true);
          // add transaction to credit account (Gutschrift)     
-         accountCredit.AddTransactions(transactionCredit, transfer);
+         accountCredit.AddTransactions(transactionCredit, transfer, false);
 
          // save to transfers-/transactionsRepository and write to database
          transfersRepository.Add(transfer);
@@ -120,7 +120,7 @@ public class UseCasesTransfer(
       
       // transactionDebit + transactionCredit should not be null 
       var originalTransactions =
-          await transactionsRepository.SelectByTransferIdAsync(originalTransferId, ctToken);
+          await transactionsRepository.FilterByTransferIdAsync(originalTransferId, ctToken);
       if (originalTransactions.Count() != 2)
           return new Error<Transfer>(404,"Reverse Money: Original transactions are not valid.");
       // var originalTransactionDebit = originalTransactions.FirstOrDefault(t => t.Amount < 0.0);
@@ -149,9 +149,9 @@ public class UseCasesTransfer(
       // and add transfer to account
       accountDebit.AddTransfer(reverseTransfer, beneficiary);
       // Create transactionFrom (Original debit) - Lastschrift
-      accountDebit.AddTransactions(reverseTransactionDebit, reverseTransfer);
+      accountDebit.AddTransactions(reverseTransactionDebit, reverseTransfer, false);
       // Create transactionTo (Credit)  - Gutschrift     
-      accountCredit.AddTransactions(reverseTransactionCredit, reverseTransfer);       
+      accountCredit.AddTransactions(reverseTransactionCredit, reverseTransfer, true);       
       
       transfersRepository.Add(reverseTransfer);             
       transactionsRepository.Add(reverseTransactionDebit);            

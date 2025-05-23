@@ -28,8 +28,9 @@ public abstract class ABaseRepository<T, TId>(
       bool withTracking = false,
       CancellationToken ctToken = default
    ) {
-      IQueryable<T> query = _dbSet;
+      var query = _dbSet.AsQueryable();
       if (!withTracking) query = query.AsNoTracking();
+      query = query.OrderBy(e => e.Id);
       var items = await query.ToListAsync(ctToken);
       _dataContext.LogChangeTracker($"{typeof(T).Name}: SelectAllAsync");
       return items;

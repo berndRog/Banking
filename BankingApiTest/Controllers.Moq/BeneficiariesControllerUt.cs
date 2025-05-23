@@ -84,79 +84,124 @@ public class BeneficiariesControllerUt : BaseControllerUt {
       // Assert
       THelper.IsEnumerableOk(actionResult, expected);
    }
-
-   /*
+   
    [Fact]
-   public async Task CreateBeneficiary_Created() {
+   public async Task CreateBeneficiaryUt_Created() {
       // Arrange
-      // debit account
-      var lastname = _seed.Beneficiary1.Lastname; // owner 5
-      var iban = _seed.Beneficiary1.Iban; // account 6
       // credit account
-      _seed.Beneficiary1.AccountId = _seed.Account1.Id;
-      var beneficiary1Dto = _mapper.Map<BeneficiaryDto>(_seed.Beneficiary1);
-      Beneficiary? addedBeneficiary = null;
+      var iban = _seed.Beneficiary1.Iban; // account 6
+      // debit account
+      _seed.Beneficiary1.SetAccount(_seed.Account1);
+      var beneficiary1Dto = _seed.Beneficiary1.ToBeneficiaryDto();
       
       // mock the repositories 
-      _mockOwnersRepository.Setup(r => r.LikeLastnameByAsync(lastname))
-         .ReturnsAsync(new List<Owner> { _seed.Owner5 });
-      _mockAccountsRepository.Setup(r => r.FindByIdAsync(_seed.Account1.Id))
-         .ReturnsAsync(_seed.Account1);
-      _mockAccountsRepository.Setup(r => r.FindByAsync(It.IsAny<Expression<Func<Account, bool>>>()))
-         .ReturnsAsync(_seed.Account1);
       // beneficiary does not exist
-      _mockBeneficiariesRepository.Setup(r => r.FindByIdAsync(_seed.Beneficiary1.Id))
+      _mockBeneficiariesRepository.Setup(r => 
+            r.FindByIdAsync(_seed.Beneficiary1.Id, CancellationToken.None))
          .ReturnsAsync(null as Beneficiary);
-      _mockBeneficiariesRepository.Setup(r => r.Add(It.IsAny<Beneficiary>()))
-         .Callback<Beneficiary>(beneficiary => addedBeneficiary = beneficiary);
-      _mockDataContext.Setup(c => c.SaveAllChangesAsync())
+      // credit account
+      _mockAccountsRepository.Setup(r => 
+            r.FindByAsync(It.IsAny<Expression<Func<Account, bool>>>(), CancellationToken.None))
+         .ReturnsAsync(_seed.Account6);
+      // debit account   
+      _mockAccountsRepository.Setup(r => 
+            r.FindByIdAsync(_seed.Account1.Id, CancellationToken.None))
+         .ReturnsAsync(_seed.Account1);
+
+      _mockBeneficiariesRepository.Setup(r => 
+            r.Add(It.IsAny<Beneficiary>()))
+         .Verifiable();
+      _mockDataContext.Setup(c => 
+            c.SaveAllChangesAsync(It.IsAny<string>(), CancellationToken.None))
          .ReturnsAsync(true);
 
       // Act
-      var actionResult = await _beneficiariesController.CreateBeneficiary(_seed.Account1.Id, beneficiary1Dto);
+      var actionResult = await _beneficiariesController.CreateAsync(_seed.Account1.Id, beneficiary1Dto);
 
       // Assert
       THelper.IsCreated(actionResult, beneficiary1Dto);
-      _mockBeneficiariesRepository.Verify(r => r.Add(It.IsAny<Beneficiary>()), Times.Once);
-      _mockDataContext.Verify(c => c.SaveAllChangesAsync(), Times.Once);
+      _mockBeneficiariesRepository.Verify(r => 
+         r.Add(It.IsAny<Beneficiary>()), Times.Once);
+      _mockDataContext.Verify(c => 
+         c.SaveAllChangesAsync(It.IsAny<string>(), CancellationToken.None), Times.Once);
+   }
+   
+   [Fact]
+   public async Task CreateBeneficiaryUt_BadRequest() {
+      // Arrange
+      // debit account
+
+      // credit account
+      _seed.Beneficiary1.SetAccount(_seed.Account1);
+      var beneficiary1Dto = _seed.Beneficiary1.ToBeneficiaryDto();
+      
+      // mock the repositories 
+      _mockBeneficiariesRepository.Setup(r => 
+            r.FindByIdAsync(_seed.Beneficiary1.Id, CancellationToken.None))
+         .ReturnsAsync(_seed.Beneficiary1);
+      
+      // Act
+      var actionResult = await _beneficiariesController.CreateAsync(_seed.Account1.Id, beneficiary1Dto);
+
+      // Assert
+      Assert.IsType<BadRequestObjectResult>(actionResult.Result);
    }
 
    [Fact]
-   public async Task CreateBeneficiary_Conflict() {
+   public async Task CreateBeneficiaryUt_CreditNotFound() {
       // Arrange
       // debit account
-      var firstname = _seed.Beneficiary1.Firstname; // owner 5
-      var lastname = _seed.Beneficiary1.Lastname; // owner 5
-      var iban = _seed.Beneficiary1.Iban; // account 6
+
       // credit account
-      _seed.Beneficiary1.AccountId = _seed.Account1.Id;
-      var beneficiary1Dto = _mapper.Map<BeneficiaryDto>(_seed.Beneficiary1);
-      Beneficiary? addedBeneficiary = null;
+      _seed.Beneficiary1.SetAccount(_seed.Account1);
+      var beneficiary1Dto = _seed.Beneficiary1.ToBeneficiaryDto();
       
       // mock the repositories 
-      _mockOwnersRepository.Setup(r => r.LikeLastnameByAsync(lastname))
-         .ReturnsAsync(new List<Owner> { _seed.Owner5 });
-      _mockAccountsRepository.Setup(r => r.FindByIdAsync(_seed.Account1.Id))
-         .ReturnsAsync(_seed.Account1);
-      _mockAccountsRepository.Setup(r => r.FindByAsync(It.IsAny<Expression<Func<Account, bool>>>()))
-         .ReturnsAsync(_seed.Account1);
-      // beneficiary already exists
-      _mockBeneficiariesRepository.Setup(r => r.FindByIdAsync(_seed.Beneficiary1.Id))
-         .ReturnsAsync(_seed.Beneficiary1);
-      _mockBeneficiariesRepository.Setup(r => r.Add(It.IsAny<Beneficiary>()))
-         .Callback<Beneficiary>(beneficiary => addedBeneficiary = beneficiary);
-      _mockDataContext.Setup(c => c.SaveAllChangesAsync())
-         .ReturnsAsync(true);
-
+      _mockBeneficiariesRepository.Setup(r => 
+            r.FindByIdAsync(_seed.Beneficiary1.Id, CancellationToken.None))
+         .ReturnsAsync(null as Beneficiary);
+      // credit account
+      _mockAccountsRepository.Setup(r => 
+            r.FindByAsync(It.IsAny<Expression<Func<Account, bool>>>(), CancellationToken.None))
+         .ReturnsAsync(null as Account);
+      
       // Act
-      var actionResult = await _beneficiariesController.CreateBeneficiary(_seed.Account1.Id, beneficiary1Dto);
+      var actionResult = await _beneficiariesController.CreateAsync(_seed.Account1.Id, beneficiary1Dto);
 
       // Assert
-      THelper.IsConflict(actionResult);
-      _mockOwnersRepository.Verify(r => r.Add(It.IsAny<Owner>()), Times.Never);
-      _mockDataContext.Verify(c => c.SaveAllChangesAsync(), Times.Never);
+      Assert.IsType<NotFoundObjectResult>(actionResult.Result);
+   }
+   
+   [Fact]
+   public async Task CreateBeneficiaryUt_DebitNotFound() {
+      // Arrange
+      // debit account
+
+      // credit account
+      _seed.Beneficiary1.SetAccount(_seed.Account1);
+      var beneficiary1Dto = _seed.Beneficiary1.ToBeneficiaryDto();
+      
+      // mock the repositories 
+      _mockBeneficiariesRepository.Setup(r => 
+            r.FindByIdAsync(_seed.Beneficiary1.Id, CancellationToken.None))
+         .ReturnsAsync(null as Beneficiary);
+      // credit account
+      _mockAccountsRepository.Setup(r => 
+            r.FindByAsync(It.IsAny<Expression<Func<Account, bool>>>(), CancellationToken.None))
+         .ReturnsAsync(_seed.Account6);
+      // debit account   
+      _mockAccountsRepository.Setup(r => 
+            r.FindByIdAsync(_seed.Account1.Id, CancellationToken.None))
+         .ReturnsAsync(null as Account);
+      
+      // Act
+      var actionResult = await _beneficiariesController.CreateAsync(_seed.Account1.Id, beneficiary1Dto);
+
+      // Assert
+      Assert.IsType<NotFoundObjectResult>(actionResult.Result);
    }
 
+   /*
    [Fact]
    public async Task DeleteBeneficiary_NoContent() {
       // Arrange

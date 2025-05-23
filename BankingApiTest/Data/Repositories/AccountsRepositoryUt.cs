@@ -43,12 +43,12 @@ public class AccountsRepositoryUt: BaseRepositoryUt {
       Assert.True(_seed.Account1.IsDeepEqual(actual, comparison));
    }
    [Fact]
-   public async Task FindByAsynUt() { 
+   public async Task FindByAsynUt_Iban() { 
       // Arrange
       await _arrangeTest.OwnersWithAccountsAsync(_seed); // repository cache is cleared
       // Act 
       var actual =  
-         await _accountsRepository.FindByAsync(o => o.Iban.Contains("DE201000"));
+         await _accountsRepository.FindByAsync(a => a.Iban.Contains("DE201000"));
       // Assert
       var comparison = new ComparisonBuilder()
          //       .IgnoreCircularReferences()

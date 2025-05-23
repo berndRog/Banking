@@ -18,7 +18,7 @@ public  class TransfersRepositoryUt: BaseRepositoryUt {
       
       // Act  without reference objects
       var actual = 
-         await _transfersRepository.SelectByAccountIdAsync(_seed.Account1.Id);
+         await _transfersRepository.FilterByAccountIdJoinTransactionsAsync(_seed.Account1.Id);
       // Assert
       var comparison = new ComparisonBuilder()
          .IgnoreCircularReferences()

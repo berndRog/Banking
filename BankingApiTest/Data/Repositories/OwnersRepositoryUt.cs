@@ -97,7 +97,7 @@ public  class OwnersRepositoryUt: BaseRepositoryUt {
       // Act
       var expected = await _ownersRepository.FindByIdAsync(_seed.Owner1.Id);
       Assert.NotNull(expected);
-      expected.Update("Meier Meier", null, "erika.meier@icloud.com");
+      expected.Update("Meier Meier", "erika.meier@icloud.com");
       _ownersRepository.Update(expected);
       await _dataContext.SaveAllChangesAsync();
       // Assert

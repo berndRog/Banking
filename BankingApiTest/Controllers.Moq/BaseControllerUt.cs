@@ -25,6 +25,7 @@ public class BaseControllerUt {
    protected readonly BeneficiariesController _beneficiariesController;
    protected readonly TransfersController _transfersController;
    protected readonly TransactionsController _transactionsController;
+   protected readonly DeleteHelper _deleteHelper;
    
    protected BaseControllerUt() {
       var serviceCollection = new ServiceCollection();
@@ -53,17 +54,28 @@ public class BaseControllerUt {
          _mockDataContext.Object
       );
       
+      // create DeleteHelper
+      _deleteHelper = new DeleteHelper(
+         _mockOwnersRepository.Object,
+         _mockAccountsRepository.Object,
+         _mockBeneficiariesRepository.Object,
+         _mockTransfersRepository.Object,
+         _mockTransactionsRepository.Object,
+         _mockDataContext.Object
+      );
+      
       // Mocking the controller
       _ownersController = new OwnersController(
          _mockOwnersRepository.Object,
          _mockAccountsRepository.Object,
-         _mockDataContext.Object
+         _mockDataContext.Object,
+         _deleteHelper
       );
       _accountsController = new AccountsController(
          _mockOwnersRepository.Object,
          _mockAccountsRepository.Object,
-         _mockTransactionsRepository.Object,
-         _mockDataContext.Object
+         _mockDataContext.Object,
+         _deleteHelper
       );
       _beneficiariesController = new BeneficiariesController(
          _mockOwnersRepository.Object,

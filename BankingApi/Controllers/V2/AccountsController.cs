@@ -18,8 +18,8 @@ namespace BankingApi.Controllers.V2;
 public class AccountsController(
    IOwnersRepository ownersRepository,
    IAccountsRepository accountsRepository,
-   ITransactionsRepository transactionRepository,
-   IDataContext dataContext
+   IDataContext dataContext,
+   DeleteHelper deleteHelper
 ) : ControllerBase {
    
    [HttpGet("accounts")]
@@ -147,18 +147,19 @@ public class AccountsController(
      
       if(account.OwnerId != owner.Id)
          return BadRequest("Delete Account: Owner and Account data do not match.");
-
       
-      // get all transactions for account      
-      var transactions = 
-         await transactionRepository.FilterByAccountIdAsync(account.Id, null, ctToken);
-
-      // remove in repository
-      foreach (var transaction in transactions)
-         transactionRepository.Remove(transaction);      
-      accountsRepository.Remove(account);
-      // write to database
-      await dataContext.SaveAllChangesAsync(null, ctToken);
+      await deleteHelper.DeleteAccountAsync(account, ctToken);
+      
+      // // get all transactions for account      
+      // var transactions = 
+      //    await transactionRepository.FilterByAccountIdAsync(account.Id, null, ctToken);
+      //
+      // // remove in repository
+      // foreach (var transaction in transactions)
+      //    transactionRepository.Remove(transaction);      
+      // accountsRepository.Remove(account);
+      // // write to database
+      // await dataContext.SaveAllChangesAsync(null, ctToken);
 
       // return no content
       return NoContent(); 

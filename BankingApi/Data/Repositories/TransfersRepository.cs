@@ -1,19 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
-using BankingApi.Core;
+﻿using BankingApi.Core;
 using BankingApi.Core.DomainModel.Entities;
 using Microsoft.EntityFrameworkCore;
-[assembly: InternalsVisibleTo("BankingApiTest")]
 namespace BankingApi.Data.Repositories;
-internal class TransfersRepository(
+public class TransfersRepository(
    DataContext dataContext
 ): ABaseRepository<Transfer, Guid>(dataContext), ITransfersRepository {
 
-   public async Task<IEnumerable<Transfer>> SelectByAccountIdAsync(
+   public async Task<IEnumerable<Transfer>> FilterByAccountIdJoinTransactionsAsync(
       Guid accountId,
       CancellationToken ctToken = default
    ) {
@@ -21,11 +14,11 @@ internal class TransfersRepository(
          .Include(transfer => transfer.Transactions)
          .Where(transfer => transfer.AccountId == accountId)
          .ToListAsync(ctToken);
-      _dataContext.LogChangeTracker($"{nameof(TransfersRepository)}: SelectByAccountIdAsync");
+      _dataContext.LogChangeTracker($"{nameof(TransfersRepository)}: FilterByAccountIdJoinTransactionsAsync");
       return  transfers;    
    }
 
-   public async Task<IEnumerable<Transfer>> SelectByBeneficiaryIdAsync(
+   public async Task<IEnumerable<Transfer>> FilterByBeneficiaryIdJoinTransactionsAsync(
       Guid beneficiaryId,
       CancellationToken ctToken = default
    ) {
@@ -33,7 +26,7 @@ internal class TransfersRepository(
          .Include(transfer => transfer.Transactions)
          .Where(transfer => transfer.BeneficiaryId == beneficiaryId)
          .ToListAsync(ctToken);
-      _dataContext.LogChangeTracker($"{nameof(TransfersRepository)}: SelectByBeneficiaryIdAsync");
+      _dataContext.LogChangeTracker($"{nameof(TransfersRepository)}: FilterByBeneficiaryIdJoinTransactionsAsync");
       return transfers;
    }
 }

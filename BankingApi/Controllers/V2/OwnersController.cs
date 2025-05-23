@@ -14,7 +14,8 @@ namespace BankingApi.Controllers.V2;
 public class OwnersController(
    IOwnersRepository ownersRepository,
    IAccountsRepository accountsRepository,
-   IDataContext dataContext
+   IDataContext dataContext,
+   DeleteHelper deleteHelper
 ): ControllerBase {
    
    [HttpGet("owners")]
@@ -44,7 +45,8 @@ public class OwnersController(
       };
    }
    
-   [HttpGet("owners/name/{name}")]
+   // GET http://localhost:5100/banking/v2/owners/name?name=xyz
+   [HttpGet("owners/name")]
    [EndpointSummary("Get owners by name with SQL like %name%")]
    [ProducesResponseType(StatusCodes.Status200OK)]
    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
@@ -74,6 +76,7 @@ public class OwnersController(
       // check if Id already exists
       if (await ownersRepository.FindByIdAsync(ownerDto.Id,ctToken) != null)
          return BadRequest("CreateOwner: Owner with given id already exists.");
+      
       // check if Name is too short or too long
       // check if Birthdate is too old or in the future
       // check if Email is too long or not valid
@@ -115,8 +118,8 @@ public class OwnersController(
       if (owner == null)
          return NotFound("UpdateOwner: Owner with given id not found.");
 
-      // Domain model: update owner
-      owner.Update(updOwnerDto.Name, updOwnerDto.Birthdate, updOwnerDto.Email);
+      // Domain model: update owner (name and email only)
+      owner.Update(updOwnerDto.Name, updOwnerDto.Email);
       // save to repository and write to database
       ownersRepository.Update(owner);
       await dataContext.SaveAllChangesAsync("Update Owner",ctToken);
@@ -135,20 +138,12 @@ public class OwnersController(
       CancellationToken ctToken = default
    ) {
       // check if owner with given Id exists
-      var owner = await ownersRepository.FindByIdAsync(id, ctToken );
+      var owner = await ownersRepository.FindByIdAsync(id, ctToken);
       if (owner == null)
          return NotFound("DeleteOwner: Owner with given id not found.");
-
-      // check if owner has accounts
-      var accounts = await accountsRepository.SelectByOwnerIdAsync(id, ctToken);
-      if(accounts.Any())
-         return BadRequest("DeleteOwner: Owner has accounts. Delete accounts first.");
       
-      // remove owner in repository 
-      ownersRepository.Remove(owner);
-      // write to database
-      await dataContext.SaveAllChangesAsync("Remove Owner", ctToken);
-
+      await deleteHelper.DeleteOwnerAsync(owner, ctToken);
+      
       // return no content
       return NoContent(); 
    }

@@ -3,7 +3,7 @@ using BankingApi.Core.DomainModel.Entities;
 using BankingApi.Core.Dtos;
 namespace BankingApi.Core; 
 public interface ITransactionsRepository: IBaseRepository<Transaction,Guid> {
-   Task<IEnumerable<Transaction>> SelectByTransferIdAsync(
+   Task<IEnumerable<Transaction>> FilterByTransferIdAsync(
       Guid transferId,
       CancellationToken ctToken = default
    );

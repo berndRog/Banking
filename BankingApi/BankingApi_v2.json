@@ -284,6 +284,36 @@
         }
       }
     },
+    "/banking/v2/beneficiaries": {
+      "get": {
+        "tags": [
+          "Beneficiaries"
+        ],
+        "summary": "Get all beneficiaries",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDto"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/banking/v2/accounts/{accountId}/beneficiaries": {
       "get": {
         "tags": [
@@ -313,62 +343,6 @@
                   }
                 }
               }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Beneficiaries"
-        ],
-        "summary": "Create a new beneficiary",
-        "parameters": [
-          {
-            "name": "accountId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BeneficiaryDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/BeneficiaryDto"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": { }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": { }
             }
           }
         }
@@ -441,6 +415,64 @@
                   "$ref": "#/components/schemas/BeneficiaryDto"
                 }
               }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": { }
+            }
+          }
+        }
+      }
+    },
+    "/banking/v2/accounts/{accountDebitId}/beneficiaries": {
+      "post": {
+        "tags": [
+          "Beneficiaries"
+        ],
+        "summary": "Create a new beneficiary",
+        "parameters": [
+          {
+            "name": "accountDebitId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BeneficiaryDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/BeneficiaryDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": { }
             }
           },
           "404": {
@@ -730,7 +762,7 @@
         }
       }
     },
-    "/banking/v2/owners/name/{name}": {
+    "/banking/v2/owners/name": {
       "get": {
         "tags": [
           "Owners"
@@ -741,14 +773,6 @@
             "name": "name",
             "in": "query",
             "description": "Name of the owner to be found with SQL like %name%",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "name",
-            "in": "path",
-            "required": true,
             "schema": {
               "type": "string"
             }
@@ -777,6 +801,29 @@
                 }
               },
               "application/json": { }
+            }
+          }
+        }
+      }
+    },
+    "/banking/v2/transactions": {
+      "get": {
+        "tags": [
+          "Transactions"
+        ],
+        "summary": "Get all transactions",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TransactionDto"
+                  }
+                }
+              }
             }
           }
         }
@@ -953,6 +1000,29 @@
                 }
               },
               "application/json": { }
+            }
+          }
+        }
+      }
+    },
+    "/banking/v2/transfers": {
+      "get": {
+        "tags": [
+          "Transfers"
+        ],
+        "summary": "Get all transfers",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TransferDto"
+                  }
+                }
+              }
             }
           }
         }

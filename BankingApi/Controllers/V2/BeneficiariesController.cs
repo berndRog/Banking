@@ -3,6 +3,7 @@ using Asp.Versioning;
 using BankingApi.Core;
 using BankingApi.Core.Dto;
 using BankingApi.Core.Mapping;
+using BankingApi.Core.Misc;
 using Microsoft.AspNetCore.Mvc;
 namespace BankingApi.Controllers.V2;
 [Route("banking/v{version:apiVersion}")]
@@ -20,6 +21,18 @@ public class BeneficiariesController(
    IDataContext dataContext
 ): ControllerBase {
    
+   [HttpGet("beneficiaries")]
+   [EndpointSummary("Get all beneficiaries")]
+   [ProducesResponseType(StatusCodes.Status200OK)]
+   [ProducesDefaultResponseType]
+   public async Task<ActionResult<AccountDto>> GetAllAsync(
+      CancellationToken ctToken = default
+   ) {
+      var beneficiaries = await beneficiariesRepository.SelectAsync(false, ctToken);
+      return Ok(beneficiaries.Select(b => b.ToBeneficiaryDto()));
+   }
+
+
    [HttpGet("accounts/{accountId:guid}/beneficiaries")]
    [EndpointSummary("Get beneficiaries of an account by accountId")]
    [Produces(MediaTypeNames.Application.Json)]
@@ -69,47 +82,40 @@ public class BeneficiariesController(
       return NotFound("Beneficiaries with given Name not found");
    }
 
-   [HttpPost("accounts/{accountId:guid}/beneficiaries")]
+   [HttpPost("accounts/{accountDebitId:guid}/beneficiaries")]
    [EndpointSummary("Create a new beneficiary")]
    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
    public async Task<ActionResult<BeneficiaryDto?>> CreateAsync(
-      [FromRoute] Guid accountId,
+      [FromRoute] Guid accountDebitId,
       [FromBody] BeneficiaryDto beneficiaryDto,
       CancellationToken ctToken = default
    ){
+      // Trim Iban and Check if Iban is valid
+      beneficiaryDto = beneficiaryDto with { Iban = Utils.CheckIban(beneficiaryDto.Iban) };
+      
       // check if beneficiaryDto.Id is empty
       if (beneficiaryDto.Id == Guid.Empty)
          beneficiaryDto = beneficiaryDto with { Id = Guid.NewGuid() };
       // check if beneficiaryDto.Id already exists
       if (await beneficiariesRepository.FindByIdAsync(beneficiaryDto.Id, ctToken) != null)
-         BadRequest("Beneficiary with given id already exists.");
-      if(beneficiaryDto.AccountId != accountId)
-         BadRequest("Bad request: accountId does not match.");
+         return BadRequest("Beneficiary with given id already exists.");
       
-         
+      // Credit Account
       var accountCredit = 
          await accountsRepository.FindByAsync(a => a.Iban == beneficiaryDto.Iban, ctToken);
       // check if account with given Iban exists
       if(accountCredit == null)
-          NotFound("Beneficiary: Credit account with given Iban not found");
+          return NotFound("Beneficiary: Credit account with given Iban not found");
       
-      // Get owners name by accout.OwnerId
-      var owners = await ownersRepository.SelectByNameAsync(beneficiaryDto.Name, ctToken);
-      var count = owners.Count();
-      if(count == 0)
-         NotFound("Beneficiary: Owner with given name not found");
-      else if(count > 1)
-         NotFound("Beneficiary: more then one owner found for the given name");
-      var owner = owners.First();
+      // Debit account
+      var accountDebit = await accountsRepository.FindByIdAsync(accountDebitId, ctToken);
+      if(accountDebit == null)
+         return NotFound("Beneficiary: Debit accountId not found.");
       
       // Domain model
       var beneficiary = beneficiaryDto.ToBeneficiary();
-      // Debit account
-      var account = await accountsRepository.FindByIdAsync(beneficiary.AccountId, ctToken);
-      if(account == null  || account.Id != accountId)
-         return BadRequest("Bad request: accountId does not exist.");
-      account.AddBeneficiary(beneficiary);
+      accountDebit.AddBeneficiary(beneficiary);
 
       // save to repository and write to database
       beneficiariesRepository.Add(beneficiary);
@@ -150,7 +156,7 @@ public class BeneficiariesController(
 
       
       // Load all transfers with the beneficiary to delete
-      var transfers = await transfersRepository.SelectByBeneficiaryIdAsync(id, ctToken);
+      var transfers = await transfersRepository.FilterByBeneficiaryIdJoinTransactionsAsync(id, ctToken);
       foreach(var transfer in transfers) {
          transfer.SetBeneficiary(null);
          transfersRepository.Update(transfer);

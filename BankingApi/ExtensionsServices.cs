@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.OpenApi;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization.Metadata;
+using BankingApi.Controllers.V2;
 
 namespace BankingApi;
 
@@ -22,6 +23,7 @@ public static class ExtensionsServices {
       services.AddScoped<IBeneficiariesRepository, BeneficiariesRepository>();
       services.AddScoped<ITransfersRepository, TransfersRepository>();
       services.AddScoped<ITransactionsRepository, TransactionsRepository>();
+      services.AddScoped<DeleteHelper>();
 
       // Add DbContext (Database) to DI-Container
       var (useDatabase, dataSource) = DataContext.EvalDatabaseConfiguration(configuration);

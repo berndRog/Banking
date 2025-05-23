@@ -8,7 +8,7 @@ public class Transaction: IEntity<Guid>   {
    public decimal Amount{ get; private set; }
    
    // navigation property Transaction (0,n):(1,1) Account  
-   public Account? Account { get; private set; }
+   public Account Account { get; private set; } = null!;
    public Guid AccountId { get; private set; }
    // navigation property Transaction (0,2):(0,1) Transfer  
    public Transfer? Transfer { get; set; }

@@ -17,6 +17,7 @@ public class Beneficiary: IEntity<Guid>{
       if(id.HasValue) Id = id.Value;
       Name = name;
       Iban = Utils.CheckIban(iban);
+      // Debit account
       if(accountId.HasValue)  AccountId = accountId.Value;
    }
    

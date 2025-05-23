@@ -6,7 +6,7 @@ namespace BankingApi;
 
 public class Program {
    
-   private static void Main(string[] args){
+   private static async Task Main(string[] args){
       // path for BankingApi images
       var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
       var wwwroot = Path.Combine(home, "Banking");
@@ -21,8 +21,6 @@ public class Program {
       builder.Logging.ClearProviders();
       builder.Logging.AddConsole();
       builder.Logging.AddDebug();
-      
-      
       
       // add http logging 
       builder.Services.AddHttpLogging(opts =>
@@ -62,10 +60,10 @@ public class Program {
       });
       
       // add versioning
-      builder.Services.AddApiVersioning(2);
+      builder.Services.AddApiVersioning(1);
       
       // add OpenApi
-      //builder.Services.AddOpenApiSettings("Banking API","v1","Übersicht über Bankkonten und Überweisungen.");
+      builder.Services.AddOpenApiSettings("Banking API","v1","Übersicht über Bankkonten und Überweisungen.");
       builder.Services.AddOpenApiSettings("Banking API","v2","Übersicht über Bankkonten und Überweisungen.");
       
       // limit imageFile max size
@@ -110,7 +108,7 @@ public class Program {
          app.MapOpenApi();
          
          app.UseSwaggerUI(opt => {
-            //opt.SwaggerEndpoint("/openapi/v1.json", "Banking API v1");
+            opt.SwaggerEndpoint("/openapi/v1.json", "Banking API v1");
             opt.SwaggerEndpoint("/openapi/v2.json", "Banking API v2");
          });
       }
@@ -122,7 +120,7 @@ public class Program {
       // app.UseAuthorization();
       app.MapControllers();
       
-      app.Run();
+      await app.RunAsync();
    }
 }
 
@@ -131,15 +129,12 @@ public class LowerCaseNamingPolicy : JsonNamingPolicy {
       name.ToLower();
 }
 
-public class GuidConverter : JsonConverter<Guid>
-{
-   public override Guid Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-   {
+public class GuidConverter : JsonConverter<Guid> {
+   public override Guid Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
       if (reader.TokenType == JsonTokenType.Null)
          return Guid.Empty;
             
-      if (reader.TokenType == JsonTokenType.String)
-      {
+      if (reader.TokenType == JsonTokenType.String) {
          string? value = reader.GetString();
          return value != null && Guid.TryParse(value, out Guid guid) ? guid : Guid.Empty;
       }
@@ -154,6 +149,7 @@ public class GuidConverter : JsonConverter<Guid>
 }
 
 public class NullableGuidConverter : JsonConverter<Guid?> {
+   
    public override Guid? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
       if (reader.TokenType == JsonTokenType.Null)
          return null;

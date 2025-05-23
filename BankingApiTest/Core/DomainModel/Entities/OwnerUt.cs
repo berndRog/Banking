@@ -59,14 +59,34 @@ public class OwnerUt {
       // Arrange
       var actual = _seed.Owner1;
       var name = "Erna Meier";
-      var birthdate = new DateTime(1990, 1, 1);
       var email = "erna.meier@freenet.de";
       // Act
-      actual.Update(name, birthdate, email);
+      actual.Update(name, email);
       // Assert
       Assert.Equal(name, actual.Name);
-      Assert.Equal(birthdate, actual.Birthdate);
       Assert.Equal(email, actual.Email);
+   }
+   
+   [Fact]
+   public void UpdateUt_EmailOnly() {
+      // Arrange
+      var actual = _seed.Owner1;
+      var email = "erna.meier@freenet.de";
+      // Act
+      actual.Update("", email);
+      // Assert
+      Assert.Equal(email, actual.Email);
+   }
+   [Fact]
+   public void UpdateUt_NameOnly() {
+      // Arrange
+      var actual = _seed.Owner1;
+      var name = "Erna Meier";
+      // Act
+      actual.Update(name, "");
+      // Assert
+      Assert.Equal(name, actual.Name);
+
    }
    #endregion
 
