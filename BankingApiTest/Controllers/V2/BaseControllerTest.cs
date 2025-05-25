@@ -27,7 +27,6 @@ public class BaseControllerTest {
    protected readonly ITransfersRepository _transfersRepository;
    protected readonly ITransactionsRepository _transactionsRepository;
    protected readonly IDataContext _dataContext;
-   protected readonly DeleteHelper _deleteHelper;
    
    protected readonly ArrangeTest _arrangeTest;
    protected readonly Seed _seed;
@@ -85,21 +84,16 @@ public class BaseControllerTest {
 
       _useCasesTransfer = serviceProvider.GetRequiredService<IUseCasesTransfer>()
          ?? throw new Exception("Failed to create an instance of IUseCasesTransfer");
-      
-      _deleteHelper = serviceProvider.GetRequiredService<DeleteHelper>()
-         ?? throw new Exception("Failed to create an instance of DeleteHelper");
-      
+
       _ownersController = new OwnersController(
          _ownersRepository,
          _accountsRepository,
-         _dataContext,
-         _deleteHelper
+         _dataContext
       );
       _accountsController = new AccountsController(
          _ownersRepository,
          _accountsRepository,
-         _dataContext,
-         _deleteHelper
+         _dataContext
       );
       _beneficiariesController = new BeneficiariesController(
          _ownersRepository,

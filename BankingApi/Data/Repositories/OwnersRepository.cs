@@ -27,10 +27,11 @@ public class OwnersRepository(
    ){
       var query = _dbSet.AsQueryable(); // IQueryable<Owner>
       if (join) query = query
-            .Include(o => o.Accounts).ThenInclude(a => a.Beneficiaries)
-            .Include(o => o.Accounts).ThenInclude(a => a.Transfers)
-            .Include(o => o.Accounts).ThenInclude(a => a.Transactions)
-            .AsSingleQuery();
+         .Include(o => o.Accounts).ThenInclude(a => a.Beneficiaries)
+         .Include(o => o.Accounts).ThenInclude(a => a.Transfers).ThenInclude(t => t.Transactions)
+         .Include(o => o.Accounts).ThenInclude(a => a.Transfers).ThenInclude(t => t.Beneficiary)
+         .Include(o => o.Accounts).ThenInclude(a => a.Transactions)
+         .AsSingleQuery();
       var owner = await query.FirstOrDefaultAsync(o => o.Id == id, ctToken);
       _dataContext.LogChangeTracker($"{nameof(Owner)}: FindbyIdJoineAsync");
       return owner;
@@ -42,8 +43,15 @@ public class OwnersRepository(
       CancellationToken ctToken = default
    ) {
       var query = _dbSet.AsQueryable(); // IQueryable<Owner>
-      if (join) query = query.Include(o => o.Accounts).AsSingleQuery();
+      if (join) query = query
+         .Include(o => o.Accounts).ThenInclude(a => a.Beneficiaries)
+         .Include(o => o.Accounts).ThenInclude(a => a.Transfers).ThenInclude(t => t.Transactions)
+         .Include(o => o.Accounts).ThenInclude(a => a.Transfers).ThenInclude(t => t.Beneficiary)
+         .Include(o => o.Accounts).ThenInclude(a => a.Transactions)
+         .AsSingleQuery();
       var owner = await query.FirstOrDefaultAsync(predicate, ctToken);
+      _dataContext.LogChangeTracker($"{nameof(Owner)}: FindByJoinAsync");
+
       return owner;
    }
    

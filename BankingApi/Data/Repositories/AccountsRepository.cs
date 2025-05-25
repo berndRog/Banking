@@ -20,24 +20,21 @@ public class AccountsRepository(
    
    public async Task<Account?> FindByIdJoinAsync(
       Guid id,
-      bool joinOwner,
-      bool joinBeneficiaries,
-      bool joinTransfers,
-      bool joinTransactions,
+      bool join,
       CancellationToken ctToken = default
    ) {
       var query = _dbSet.AsQueryable();  // IQueryable<Account>
       query = query.Where(a => a.Id == id);     
-      if (joinOwner) query = query.Include(a => a.Owner);
-      if (joinBeneficiaries) query = query.Include(a => a.Beneficiaries);
-      if (joinTransfers) query = query.Include(a => a.Transfers).ThenInclude(t => t.Transactions);
-      if (joinTransactions) query = query.Include(a => a.Transactions);
-      query = query.AsSplitQuery();
+      if (join) query = query
+         .Include(a => a.Owner)
+         .Include(a => a.Beneficiaries)
+         .Include(a => a.Transfers).ThenInclude(t => t.Transactions)
+         .Include(a => a.Transfers).ThenInclude(t => t.Beneficiary)
+         .Include(a => a.Transactions)
+         .AsSingleQuery();
       var accounts =  await query.FirstOrDefaultAsync(ctToken);
       _dataContext.LogChangeTracker("{nameOf(Account).Name}: FindByIdJoinAsync");
       return accounts;
 
    }
-   
-
 }

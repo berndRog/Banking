@@ -9,4 +9,5 @@ public interface IBeneficiariesRepository: IBaseRepository<Beneficiary,Guid> {
       Guid accountId, 
       CancellationToken ctToken = default
    );
+
 }

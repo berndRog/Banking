@@ -18,8 +18,7 @@ namespace BankingApi.Controllers.V2;
 public class AccountsController(
    IOwnersRepository ownersRepository,
    IAccountsRepository accountsRepository,
-   IDataContext dataContext,
-   DeleteHelper deleteHelper
+   IDataContext dataContext
 ) : ControllerBase {
    
    [HttpGet("accounts")]
@@ -140,15 +139,17 @@ public class AccountsController(
       if (owner == null)
          return NotFound("Delete Account: Owner not found.");
 
-      var account = 
-         await accountsRepository.FindByIdJoinAsync(id, true, true, true, true, ctToken);
+      var account = await accountsRepository.FindByIdJoinAsync(id, true, ctToken);
       if (account == null)
          return NotFound("Delete Account: Account not found.");
      
       if(account.OwnerId != owner.Id)
          return BadRequest("Delete Account: Owner and Account data do not match.");
       
-      await deleteHelper.DeleteAccountAsync(account, ctToken);
+      accountsRepository.Remove(account);
+      dataContext.SaveAllChangesAsync("Delete Account",ctToken);
+      
+      // await deleteHelper.DeleteAccountAsync(account, ctToken);
       
       // // get all transactions for account      
       // var transactions = 

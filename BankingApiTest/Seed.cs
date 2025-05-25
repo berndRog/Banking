@@ -493,6 +493,8 @@ public class Seed {
       Transaction transactionCredit
    ){
       accountDebit.AddTransfer(transfer, beneficiary);
+      transactionDebit.Set(accountDebit, transfer, true);
+      transactionCredit.Set(accountCredit, transfer, true);
       transactionDebit?.Account?.AddTransactions(transactionDebit, transfer, true);
       transactionCredit?.Account?.AddTransactions(transactionCredit, transfer, false);
    }

@@ -27,4 +27,5 @@ public class BeneficiariesRepository(
       _dataContext.LogChangeTracker($"{nameof(Beneficiary)}: SelectByAccountIdAsync");
       return entities;
    }
+   
 }

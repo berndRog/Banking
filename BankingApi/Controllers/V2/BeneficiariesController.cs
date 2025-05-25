@@ -153,11 +153,11 @@ public class BeneficiariesController(
 
       if(beneficiary.AccountId != accountId)
          return BadRequest("Bad request: accountId does not match.");
-
       
-      // Load all transfers with the beneficiary to delete
+      // Load all transfers linked with the beneficiary
       var transfers = await transfersRepository.FilterByBeneficiaryIdJoinTransactionsAsync(id, ctToken);
       foreach(var transfer in transfers) {
+         // delete fk, don't delete the transfer 
          transfer.SetBeneficiary(null);
          transfersRepository.Update(transfer);
       }

@@ -1,5 +1,4 @@
-﻿using System;
-using BankingApi.Core.DomainModel.Entities;
+﻿using BankingApi.Core.DomainModel.Entities;
 using Xunit;
 namespace BankingApiTest.Core.DomainModel.Entities;
 public class TransferUt {

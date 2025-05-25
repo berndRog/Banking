@@ -81,14 +81,14 @@ public class AccountsRepositoryUt: BaseRepositoryUt {
    }
 
    [Fact]
-   public async Task FindByIdJoinOwnerUt() {
+   public async Task FindByIdJoinUt() {
       // Arrange
       await _arrangeTest.ExampleAsync(_seed);
       var expected = _seed.Account1;
       
       // Act
       // Select with join
-      var actual = await _accountsRepository.FindByIdJoinAsync(_seed.Account1.Id, true, false, false, false);
+      var actual = await _accountsRepository.FindByIdJoinAsync(_seed.Account1.Id, true);
 
       // Assert
       var comparison = new ComparisonBuilder()
@@ -100,77 +100,6 @@ public class AccountsRepositoryUt: BaseRepositoryUt {
          .Create();
       Assert.True(expected.IsDeepEqual(actual, comparison));
 
-   }
-
-   [Fact]
-   public async Task FindByIdJoinOwnerAndBeneficiariesUt() {
-      // Arrange
-      await _arrangeTest.ExampleAsync(_seed);
-      var expected = _seed.Account1;
-      
-      // Act
-      // Select with join
-      var actual = await _accountsRepository.FindByIdJoinAsync(_seed.Account1.Id, true, true, false, false);
-
-      // Assert
-      var comparison = new ComparisonBuilder()
-         .IgnoreCircularReferences()
-         .IgnoreProperty<Owner>(o => o.Accounts)
-         //.IgnoreProperty<Account>(a => a.Beneficiaries)
-         .IgnoreProperty<Account>(a => a.Transfers)
-         .IgnoreProperty<Account>(a => a.Transactions)
-         .Create();
-      Assert.True(expected.IsDeepEqual(actual, comparison));
-   }
-
-   [Fact]
-   public async Task FindByIdJoinOwnerAndBeneficiariesAndTransfersUt() {
-      // Arrange
-      await _arrangeTest.ExampleAsync(_seed);
-      var expected = _seed.Account1;
-      
-      // Act
-      // Select with join
-      var actual = await _accountsRepository.FindByIdJoinAsync(_seed.Account1.Id, true, true, true, false);
-
-      // Assert
-      var comparison = new ComparisonBuilder()
-         .IgnoreCircularReferences()
-         .IgnoreProperty<Owner>(o => o.Accounts)
-         //.IgnoreProperty<Account>(a => a.Beneficiaries)
-         //.IgnoreProperty<Account>(a => a.Transfers)
-         .IgnoreProperty<Transfer>(tf => tf.Account)
-         .IgnoreProperty<Transfer>(tf => tf.Beneficiary)
-         .IgnoreProperty<Transfer>(tf => tf.Transactions)
-         .IgnoreProperty<Account>(a => a.Transactions)
-         .Create();
-      Assert.True(expected.IsDeepEqual(actual, comparison));
-   }
-
-   [Fact]
-   public async Task FindByIdJoinOwnerAndBeneficiariesAndTransfersAndTransactionsUt() {
-      // Arrange
-      await _arrangeTest.ExampleAsync(_seed);
-      var expected = _seed.Account1;
-      
-      // Act
-      // Select with join
-      var actual = await _accountsRepository.FindByIdJoinAsync(_seed.Account1.Id, true, true, true, true);
-
-      // Assert
-      var comparison = new ComparisonBuilder()
-         .IgnoreCircularReferences()
-         .IgnoreProperty<Owner>(o => o.Accounts)
-         //.IgnoreProperty<Account>(a => a.Beneficiaries)
-         //.IgnoreProperty<Account>(a => a.Transfers)
-         .IgnoreProperty<Transfer>(tf => tf.Account)
-         .IgnoreProperty<Transfer>(tf => tf.Beneficiary)
-         .IgnoreProperty<Transfer>(tf => tf.Transactions)
-         //.IgnoreProperty<Account>(a => a.Transactions)
-         .IgnoreProperty<Transaction>(ta => ta.Account)
-         .IgnoreProperty<Transaction>(ta => ta.Transfer)
-         .Create();
-      Assert.True(expected.IsDeepEqual(actual, comparison));
    }
    #endregion
 

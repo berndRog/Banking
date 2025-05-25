@@ -8,8 +8,6 @@ public class Owner: IEntity<Guid> {
    public string? Email { get; private set; } = null;
    // navigation collection Owner (1,1):(0,n) Account  
    public IList<Account> Accounts { get; } = [];
-   // navigation property Owner (1,1):(0,1) Image
-   // public Image? Image { get; private set; }
    
    public Owner() {}
    public Owner(Guid? id, string name, DateTime birthdate, string? email) {

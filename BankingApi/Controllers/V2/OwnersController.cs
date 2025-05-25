@@ -14,8 +14,7 @@ namespace BankingApi.Controllers.V2;
 public class OwnersController(
    IOwnersRepository ownersRepository,
    IAccountsRepository accountsRepository,
-   IDataContext dataContext,
-   DeleteHelper deleteHelper
+   IDataContext dataContext
 ): ControllerBase {
    
    [HttpGet("owners")]
@@ -138,11 +137,12 @@ public class OwnersController(
       CancellationToken ctToken = default
    ) {
       // check if owner with given Id exists
-      var owner = await ownersRepository.FindByIdAsync(id, ctToken);
+      var owner = await ownersRepository.FindByIdJoinAsync(id, true, ctToken);
       if (owner == null)
          return NotFound("DeleteOwner: Owner with given id not found.");
       
-      await deleteHelper.DeleteOwnerAsync(owner, ctToken);
+      ownersRepository.Remove(owner);
+      await dataContext.SaveAllChangesAsync("Delete Owner",ctToken);
       
       // return no content
       return NoContent(); 

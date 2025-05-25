@@ -23,8 +23,7 @@ public static class ExtensionsServices {
       services.AddScoped<IBeneficiariesRepository, BeneficiariesRepository>();
       services.AddScoped<ITransfersRepository, TransfersRepository>();
       services.AddScoped<ITransactionsRepository, TransactionsRepository>();
-      services.AddScoped<DeleteHelper>();
-
+      
       // Add DbContext (Database) to DI-Container
       var (useDatabase, dataSource) = DataContext.EvalDatabaseConfiguration(configuration);
 

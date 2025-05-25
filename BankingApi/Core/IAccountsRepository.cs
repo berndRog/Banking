@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using BankingApi.Core.DomainModel.Entities;
+﻿using BankingApi.Core.DomainModel.Entities;
 namespace BankingApi.Core; 
 public interface IAccountsRepository: IBaseRepository<Account,Guid> {
 
@@ -13,10 +9,7 @@ public interface IAccountsRepository: IBaseRepository<Account,Guid> {
       
    Task<Account?> FindByIdJoinAsync(
       Guid id,
-      bool joinOwner = false, 
-      bool joinBeneficiaries = false,
-      bool joinTransfers = false,
-      bool joinTransactions = false,
+      bool join = true,
       CancellationToken ctToken = default
    );
 
