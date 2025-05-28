@@ -84,16 +84,22 @@ public class OwnersControllerTest : BaseControllerTest {
    
    # region owners + accounts + beneficiaries + transfers + transactions
    [Fact]
-   public async Task DeleteOwnerTest() {
+   public async Task DeleteOwner1Test() {
       // Arrange
-      await _arrangeTest.Owner1With2AccountsAsync(_seed);
-      var accounts = await _accountsRepository.SelectByOwnerIdAsync(_seed.Owner1.Id);
-      foreach(var account in accounts) 
-         _accountsRepository.Remove(account);
-      await _dataContext.SaveAllChangesAsync("Remove Accounts", CancellationToken.None);
-      _dataContext.ClearChangeTracker(); // clear repository cache
+      await _arrangeTest.SendMoneyTest1(_seed);
       
-      var expected = _seed.Owner1.ToOwnerDto();
+      // Act
+      var actionResult =
+         await _ownersController.DeleteAsync(_seed.Owner1.Id);
+
+      // Assert
+      Assert.IsType<NoContentResult>(actionResult);
+   }
+   
+   [Fact]
+   public async Task DeleteOwnerCascadingTest() {
+      // Arrange
+      await _arrangeTest.ExampleAsync(_seed);
       
       // Act
       var actionResult =

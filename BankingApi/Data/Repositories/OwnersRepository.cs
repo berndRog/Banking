@@ -88,37 +88,4 @@ public class OwnersRepository(
       _dataContext.LogChangeTracker($"{nameof(Owner)}: FindByIdJoin2Async");
       return owners;
    }
-
-
-   public async Task<Owner?> DeleteCascadingAsync(
-      Guid id,
-      CancellationToken ctToken = default
-   ) {
-      
-      
-      // Schrittweise löschen
-      var owner = await _dataContext.Owners
-         .Include(o => o.Accounts)
-            .ThenInclude(a => a.Transactions)
-         .Include(o => o.Accounts)
-            .ThenInclude(a => a.Transfers)
-         .Include(o => o.Accounts)
-            .ThenInclude(a => a.Beneficiaries)
-         .FirstOrDefaultAsync(o => o.Id == id, ctToken);
-
-      //if (owner == null) return NotFound();
-
-      // alle abhängigen Objekte explizit löschen
-      foreach (var account in owner.Accounts) {
-         _dataContext.Transactions.RemoveRange(account.Transactions);
-         _dataContext.Transfers.RemoveRange(account.Transfers);
-         _dataContext.Beneficiaries.RemoveRange(account.Beneficiaries);
-      }
-      _dataContext.Accounts.RemoveRange(owner.Accounts);
-      _dataContext.Owners.Remove(owner);
-
-      await _dataContext.SaveChangesAsync(ctToken);
-      
-      return owner;
-   }
 }

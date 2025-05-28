@@ -13,7 +13,6 @@ namespace BankingApi.Controllers.V2;
 [Produces("application/json")] //default
 public class OwnersController(
    IOwnersRepository ownersRepository,
-   IAccountsRepository accountsRepository,
    IDataContext dataContext
 ): ControllerBase {
    

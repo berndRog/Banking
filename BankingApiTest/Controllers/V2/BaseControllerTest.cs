@@ -87,7 +87,6 @@ public class BaseControllerTest {
 
       _ownersController = new OwnersController(
          _ownersRepository,
-         _accountsRepository,
          _dataContext
       );
       _accountsController = new AccountsController(
@@ -96,7 +95,6 @@ public class BaseControllerTest {
          _dataContext
       );
       _beneficiariesController = new BeneficiariesController(
-         _ownersRepository,
          _accountsRepository,
          _beneficiariesRepository,
          _transfersRepository,

@@ -14,7 +14,6 @@ namespace BankingApi.Controllers.V2;
 [Produces("application/json")] //default
 
 public class BeneficiariesController(
-   IOwnersRepository ownersRepository,
    IAccountsRepository accountsRepository,
    IBeneficiariesRepository beneficiariesRepository,
    ITransfersRepository transfersRepository,
@@ -82,6 +81,22 @@ public class BeneficiariesController(
       return NotFound("Beneficiaries with given Name not found");
    }
 
+   [HttpGet("beneficiaries/iban/{iban}")]
+   [EndpointSummary("Get a beneficiary by Iban")]
+   [ProducesResponseType(typeof(BeneficiaryDto), StatusCodes.Status200OK)]
+   [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
+   public async Task<ActionResult<IEnumerable<BeneficiaryDto>>> GetByIbanAsync(
+      [FromRoute] string iban,
+      CancellationToken ctToken = default
+   ){
+      // Find beneficiaries by SQL like %name%
+      var beneficiary = await beneficiariesRepository.FindByAsync(b=> b.Iban == iban, ctToken);
+      if(beneficiary == null)   
+         return NotFound("Beneficiary with given Iban not found");
+      
+      return Ok(beneficiary.ToBeneficiaryDto());
+   }
+   
    [HttpPost("accounts/{accountDebitId:guid}/beneficiaries")]
    [EndpointSummary("Create a new beneficiary")]
    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
@@ -133,6 +148,7 @@ public class BeneficiariesController(
    
    // Delete a beneficiary by Id.
    [HttpDelete("accounts/{accountId:guid}/beneficiaries/{id:guid}")]
+   [EndpointSummary("Delete a benfificary with given id and with a given accountId")]
    [ProducesResponseType(StatusCodes.Status200OK)]
    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
@@ -155,7 +171,9 @@ public class BeneficiariesController(
          return BadRequest("Bad request: accountId does not match.");
       
       // Load all transfers linked with the beneficiary
-      var transfers = await transfersRepository.FilterByBeneficiaryIdJoinTransactionsAsync(id, ctToken);
+      var transfers = 
+         await transfersRepository.FilterByAsync(tf => tf.BeneficiaryId == id, ctToken);
+      
       foreach(var transfer in transfers) {
          // delete fk, don't delete the transfer 
          transfer.SetBeneficiary(null);

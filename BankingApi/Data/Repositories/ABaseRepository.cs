@@ -18,7 +18,7 @@ public abstract class ABaseRepository<T, TId>(
       TId id,
       CancellationToken ctToken = default
    ) {
-      object[] keyValues = [ id ];
+      object[] keyValues = [ id! ];
       var entity = await _dbSet.FindAsync(keyValues, ctToken);
       _dataContext.LogChangeTracker($"{typeof(T).Name}: FindByIdAsync");
       return entity;

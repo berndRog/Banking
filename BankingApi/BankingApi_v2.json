@@ -240,7 +240,7 @@
         "tags": [
           "Accounts"
         ],
-        "summary": "Delete an account for a given ownerId",
+        "summary": "Delete an account with given id and with a given ownerId",
         "parameters": [
           {
             "name": "ownerId",
@@ -431,6 +431,47 @@
         }
       }
     },
+    "/banking/v2/beneficiaries/iban/{iban}": {
+      "get": {
+        "tags": [
+          "Beneficiaries"
+        ],
+        "summary": "Get a beneficiary by Iban",
+        "parameters": [
+          {
+            "name": "iban",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BeneficiaryDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": { }
+            }
+          }
+        }
+      }
+    },
     "/banking/v2/accounts/{accountDebitId}/beneficiaries": {
       "post": {
         "tags": [
@@ -494,6 +535,7 @@
         "tags": [
           "Beneficiaries"
         ],
+        "summary": "Delete a benfificary with given id and with a given accountId",
         "parameters": [
           {
             "name": "accountId",

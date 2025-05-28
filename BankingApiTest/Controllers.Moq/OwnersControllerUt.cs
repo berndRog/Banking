@@ -147,12 +147,9 @@ public class OwnersControllerUt : BaseControllerUt {
       _seed.DoTransfer1();
       var owner = _seed.Owner1;
       var id = owner.Id;
-      var account = _seed.Account1;
       
-      _mockOwnersRepository.Setup(r => r.FindByIdAsync(id, CancellationToken.None))
+      _mockOwnersRepository.Setup(r => r.FindByIdJoinAsync(id, true, CancellationToken.None))
          .ReturnsAsync(owner);
-      _mockAccountsRepository.Setup(r => r.SelectByOwnerIdAsync(id, CancellationToken.None))
-         .ReturnsAsync([]);
       _mockOwnersRepository.Setup(r => r.Remove(owner))
          .Callback(() => { })
          .Verifiable();

@@ -25,7 +25,8 @@ public class TransfersControllerUt : BaseControllerUt {
       // mock the result of the repository
       _mockAccountsRepository.Setup(r => r.FindByIdAsync(id, CancellationToken.None))
          .ReturnsAsync(_seed.Account1);
-      _mockTransfersRepository.Setup(r => r.FilterByAccountIdJoinTransactionsAsync(id, CancellationToken.None))
+      _mockTransfersRepository.Setup(r => 
+            r.FilterByAsync(It.IsAny<Expression<Func<Transfer, bool>>>(), CancellationToken.None))
          .ReturnsAsync(repoResult);
       
       var expected = repoResult.Select(t => t.ToTransferDto());

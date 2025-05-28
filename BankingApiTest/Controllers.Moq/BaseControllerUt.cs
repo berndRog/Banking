@@ -57,7 +57,6 @@ public class BaseControllerUt {
       // Mocking the controller
       _ownersController = new OwnersController(
          _mockOwnersRepository.Object,
-         _mockAccountsRepository.Object,
          _mockDataContext.Object
       );
       _accountsController = new AccountsController(
@@ -66,7 +65,6 @@ public class BaseControllerUt {
          _mockDataContext.Object
       );
       _beneficiariesController = new BeneficiariesController(
-         _mockOwnersRepository.Object,
          _mockAccountsRepository.Object,
          _mockBeneficiariesRepository.Object,
          _mockTransfersRepository.Object,

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using BankingApi.Core.DomainModel.Entities;
+﻿using BankingApi.Core.DomainModel.Entities;
 namespace BankingApi.Core.UseCases; 
 public class UseCasesTransfer(
    IAccountsRepository accountsRepository,

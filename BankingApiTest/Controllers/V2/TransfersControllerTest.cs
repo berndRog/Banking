@@ -12,10 +12,13 @@ public class TransfersControllerTest: BaseControllerTest {
    
 
    [Fact]
-   public async Task GetTest() {
+   public async Task GetByAccountIdAsyncTest() {
       // Arrange
       await _arrangeTest.ExampleAsync(_seed);
-      var expected = _seed.Transfers.Select(t => t.ToTransferDto());
+      var expected = _seed.Transfers
+         .Where(t => t.AccountId == _seed.Account1.Id)
+         .Select(t => t.ToTransferDto())
+         .ToList();
       // Act
       var actionResult = await _transfersController.GetByAccountIdAsync(_seed.Account1.Id);
       // Assert
@@ -23,7 +26,7 @@ public class TransfersControllerTest: BaseControllerTest {
    }
 
    [Fact]
-   public async Task GetByIdTest() {
+   public async Task GetByIdAsyncTest() {
       // Arrange
       await _arrangeTest.SendMoneyTest1(_seed);
       var expected = _seed.Transfer1.ToTransferDto();

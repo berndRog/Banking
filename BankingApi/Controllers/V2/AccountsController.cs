@@ -124,7 +124,7 @@ public class AccountsController(
    }
    
    [HttpDelete("owners/{ownerId:guid}/accounts/{id:guid}")] 
-   [EndpointSummary("Delete an account for a given ownerId")]
+   [EndpointSummary("Delete an account with given id and with a given ownerId")]
    [ProducesResponseType(StatusCodes.Status204NoContent)]
    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
    public async Task<IActionResult> DeleteAsync(
@@ -147,21 +147,8 @@ public class AccountsController(
          return BadRequest("Delete Account: Owner and Account data do not match.");
       
       accountsRepository.Remove(account);
-      dataContext.SaveAllChangesAsync("Delete Account",ctToken);
+      await dataContext.SaveAllChangesAsync("Delete Account",ctToken);
       
-      // await deleteHelper.DeleteAccountAsync(account, ctToken);
-      
-      // // get all transactions for account      
-      // var transactions = 
-      //    await transactionRepository.FilterByAccountIdAsync(account.Id, null, ctToken);
-      //
-      // // remove in repository
-      // foreach (var transaction in transactions)
-      //    transactionRepository.Remove(transaction);      
-      // accountsRepository.Remove(account);
-      // // write to database
-      // await dataContext.SaveAllChangesAsync(null, ctToken);
-
       // return no content
       return NoContent(); 
    }
