@@ -20,8 +20,6 @@ public class DataContext: DbContext, IDataContext {
    public DbSet<Beneficiary> Beneficiaries => Set<Beneficiary>();
    public DbSet<Transfer> Transfers => Set<Transfer>();
    public DbSet<Transaction> Transactions => Set<Transaction>();
-   public DbSet<Image> Images => Set<Image>();
-
    
    public DataContext(
       DbContextOptions<DataContext> options
@@ -30,7 +28,6 @@ public class DataContext: DbContext, IDataContext {
 //      Database.EnsureCreated();
 //      Database.ExecuteSqlRaw("PRAGMA foreign_keys = ON;");
    }
-   
    
    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
       // https://learn.microsoft.com/de-de/ef/core/logging-events-diagnostics/simple-logging

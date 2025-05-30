@@ -18,7 +18,9 @@ public class Account: IEntity<Guid> {
    // navigation collectiony Account (1,1):(0,n) Transaction  
    public IList<Transaction> Transactions { get; private set; } = [];
    
+   // ctor EF Core
    public Account() {}
+   // ctor DomainModel
    public Account(Guid? id, string iban, decimal balance, Guid? ownerId = null) {
       if(id.HasValue) Id = id.Value;
       Iban = Utils.CheckIban(iban);
@@ -26,17 +28,20 @@ public class Account: IEntity<Guid> {
       if(ownerId.HasValue) OwnerId = ownerId.Value;
    }
 
+   // Account (0,n):(1,1)Owner 
    public void SetOwner(Owner owner) {
       Owner = owner;
       OwnerId = owner.Id;
    }
    
+   // Account (1,1):(0,n) Beneficiaries 
    public void AddBeneficiary(Beneficiary beneficiary){  
       // set account in beneficiary
       beneficiary.SetAccount(this);
       Beneficiaries.Add(beneficiary);
    }
 
+   // Account (1,1):(0,n) Transfers 
    // Add transfer to account and to beneficiary
    public void AddTransfer(Transfer transfer, Beneficiary beneficiary) {
       // set account in transfer
@@ -46,6 +51,7 @@ public class Account: IEntity<Guid> {
       transfer.SetBeneficiary(beneficiary);
    }
    
+   // Account (1,1):(0,n) Transfers 
    // Add transactions to accounts
    public void AddTransactions(Transaction transaction, Transfer transfer, bool isDebit){
       

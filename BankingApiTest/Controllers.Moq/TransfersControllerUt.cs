@@ -75,13 +75,10 @@ public class TransfersControllerUt : BaseControllerUt {
    public async Task SendMoney_Ok() {
       // Arrange
       _seed.PrepareTest1();
-//      _seed.Transfer1.AccountId = _seed.Account1.Id;
-//      _seed.Transfer1.BeneficiaryId = _seed.Beneficiary1.Id;
       _seed.Transfer1.SetAccount(_seed.Account1);
       _seed.Transfer1.SetBeneficiary(_seed.Beneficiary1);
       var expected = _seed.Transfer1.ToTransferDto();
       
-      var id = _seed.Transfer1.Id;
       var accountDebit = _seed.Account1;
       var beneficiary = _seed.Beneficiary1;
       var accountCredit = _seed.Account6;
@@ -111,13 +108,131 @@ public class TransfersControllerUt : BaseControllerUt {
    }
 
    [Fact]
+   public async Task SendMoney_BeneficiaryTransferIdAlreadyExistsBadRequest() {
+      // Arrange
+      _seed.PrepareTest1();
+      _seed.Transfer1.SetAccount(_seed.Account1);
+      _seed.Transfer1.SetBeneficiary(_seed.Beneficiary1);
+      var expected = _seed.Transfer1.ToTransferDto();
+      var accountDebit = _seed.Account1;
+      
+      // mock the result of the repository
+      _mockTransfersRepository.Setup(r => r.FindByIdAsync(It.IsAny<Guid>(), CancellationToken.None))
+         .ReturnsAsync(_seed.Transfer1);
+      
+      // Act
+      var actionResult = await _transfersController.SendMoneyAsync(accountDebit.Id, expected);
+
+      // Assert
+      Assert.IsType<BadRequestObjectResult>(actionResult.Result);
+   }
+
+   [Fact]
+   public async Task SendMoney_BeneficiaryIdNotFound() {
+      // Arrange
+      _seed.PrepareTest1();
+      _seed.Transfer1.SetAccount(_seed.Account1);
+      //_seed.Transfer1.SetBeneficiary(_seed.Beneficiary1);
+      var expected = _seed.Transfer1.ToTransferDto();
+
+      var accountDebit = _seed.Account1;
+
+      // mock the result of the repository
+      _mockTransfersRepository.Setup(r => r.FindByIdAsync(It.IsAny<Guid>(), CancellationToken.None))
+         .ReturnsAsync(null as Transfer);
+
+      // Act
+      var actionResult = await _transfersController.SendMoneyAsync(accountDebit.Id, expected);
+
+      // Assert
+      Assert.IsType<NotFoundObjectResult>(actionResult.Result);
+   }
+
+   [Fact]
+   public async Task SendMoney_AccountDebitNotFound() {
+      // Arrange
+      _seed.PrepareTest1();
+      _seed.Transfer1.SetAccount(_seed.Account1);
+      _seed.Transfer1.SetBeneficiary(_seed.Beneficiary1);
+      var expected = _seed.Transfer1.ToTransferDto();
+      
+      var accountDebit = _seed.Account1;
+      
+      // mock the result of the repository
+      _mockAccountsRepository.Setup(r => r.FindByIdAsync(It.IsAny<Guid>(), CancellationToken.None))
+         .ReturnsAsync(accountDebit);
+      _mockTransfersRepository.Setup(r => r.FindByIdAsync(It.IsAny<Guid>(), CancellationToken.None))
+         .ReturnsAsync(null as Transfer);
+      
+      // Act
+      var actionResult = await _transfersController.SendMoneyAsync(Guid.NewGuid(), expected);
+      
+      // Assert
+      Assert.IsType<NotFoundObjectResult>(actionResult.Result);
+   }
+   
+   [Fact]
+   public async Task SendMoney_BeneficiaryNotFound() {
+      // Arrange
+      _seed.PrepareTest1();
+      _seed.Transfer1.SetAccount(_seed.Account1);
+      _seed.Transfer1.SetBeneficiary(_seed.Beneficiary1);
+      var expected = _seed.Transfer1.ToTransferDto();
+      
+      var accountDebit = _seed.Account1;
+      var beneficiary = _seed.Beneficiary1;
+      var accountCredit = _seed.Account6;
+      
+      // mock the result of the repository
+      _mockAccountsRepository.Setup(r => r.FindByIdAsync(It.IsAny<Guid>(), CancellationToken.None))
+         .ReturnsAsync(accountDebit);
+      _mockBeneficiariesRepository.Setup(r => r.FindByIdAsync(It.IsAny<Guid>(), CancellationToken.None))
+         .ReturnsAsync(null as Beneficiary);
+      _mockTransfersRepository.Setup(r => r.FindByIdAsync(It.IsAny<Guid>(), CancellationToken.None))
+         .ReturnsAsync(null as Transfer);
+      
+      // Act
+      var actionResult = await _transfersController.SendMoneyAsync(accountDebit.Id, expected);
+      
+      // Assert
+      Assert.IsType<NotFoundObjectResult>(actionResult.Result);
+   }
+   
+   [Fact]
+   public async Task SendMoney_AccountCreditNotFound() {
+      // Arrange
+      _seed.PrepareTest1();
+      _seed.Transfer1.SetAccount(_seed.Account1);
+      _seed.Transfer1.SetBeneficiary(_seed.Beneficiary1);
+      var expected = _seed.Transfer1.ToTransferDto();
+      
+      var accountDebit = _seed.Account1;
+      var beneficiary = _seed.Beneficiary1;
+      
+      // mock the result of the repository
+      _mockAccountsRepository.Setup(r => r.FindByIdAsync(It.IsAny<Guid>(), CancellationToken.None))
+         .ReturnsAsync(accountDebit);
+      _mockBeneficiariesRepository.Setup(r => r.FindByIdAsync(It.IsAny<Guid>(), CancellationToken.None))
+         .ReturnsAsync(beneficiary);
+      _mockAccountsRepository.Setup(r => r.FindByAsync(a => a.Iban == beneficiary.Iban, CancellationToken.None))
+         .ReturnsAsync(null as Account);
+      _mockTransfersRepository.Setup(r => r.FindByIdAsync(It.IsAny<Guid>(), CancellationToken.None))
+         .ReturnsAsync(null as Transfer);
+      
+      // Act
+      var actionResult = await _transfersController.SendMoneyAsync(accountDebit.Id, expected);
+
+
+      // Assert
+      Assert.IsType<NotFoundObjectResult>(actionResult.Result);
+   }
+   
+   [Fact]
    public async Task ReverseMoney_Ok() {
       // Arrange
       _seed.DoTransfer1();
       _seed.Transfer1.SetAccount(_seed.Account1);
       _seed.Transfer1.SetBeneficiary(_seed.Beneficiary1);
-      //_seed.Transfer1.AccountId = _seed.Account1.Id;
-      //_seed.Transfer1.BeneficiaryId = _seed.Beneficiary1.Id;
       
       var originalTransfer = _seed.Transfer1;
       var reverseTransfer = new Transfer(

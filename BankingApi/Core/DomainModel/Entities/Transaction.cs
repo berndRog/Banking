@@ -14,7 +14,9 @@ public class Transaction: IEntity<Guid>   {
    public Transfer? Transfer { get; set; }
    public Guid? TransferId { get; set; }
    
+   // ctor EF Core
    public Transaction() {}
+   // ctor DomainModel
    public Transaction(Guid? id, DateTime date, decimal amount, 
       Guid? accountId = null, Guid? transferId = null) {
       if(id.HasValue) Id = id.Value;
@@ -24,6 +26,7 @@ public class Transaction: IEntity<Guid>   {
       if(transferId.HasValue) TransferId = transferId.Value;
    }
    
+   // Set Account and Transfer in Transaction
    public void Set(Account account, Transfer transfer, bool isDebit = true){
       Account = account;
       AccountId = account.Id;

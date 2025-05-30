@@ -48,13 +48,4 @@ public static class Mappings {
          dto.AccountId, dto.TransferId);
    }
    
-   // Entity image <-> DTO imageDto
-   public static ImageDto ToImageDto(this Image image) {
-      return new ImageDto(image.Id, image.UrlString, image.ContentType, image.Updated,
-         image.OwnerId);
-   }
-   public static Image ToImage(this ImageDto dto) {
-      return new Image(dto.Id, dto.UrlString, dto.ContentType, dto.Updated,
-         dto.OwnerId);
-   }
 }

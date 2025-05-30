@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using BankingApi.Core.Dto;
 using BankingApi.Core.Mapping;
@@ -9,6 +10,17 @@ namespace BankingApiTest.Controllers.V2;
 public class AccountsControllerTest: BaseControllerTest {
 
    #region Accounts<->Owners
+   [Fact]
+   public async Task GetAllAsyncTest() {
+      // Arrange
+      await _arrangeTest.OwnersWithAccountsAsync(_seed);
+      var expected = _seed.Accounts.Select(t => t.ToAccountDto()).ToList();
+      // Act
+      var actionResult = await _accountsController.GetAllAsync();
+      // Assert
+      THelper.IsEnumerableOk(actionResult!, expected);
+   }
+   
    [Fact]
    public async Task GetAccountsByOwnerIdTest() {
       // Arrange

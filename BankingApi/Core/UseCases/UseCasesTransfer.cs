@@ -1,159 +1,175 @@
 ﻿using BankingApi.Core.DomainModel.Entities;
-namespace BankingApi.Core.UseCases; 
+namespace BankingApi.Core.UseCases;
+
 public class UseCasesTransfer(
    IAccountsRepository accountsRepository,
    IBeneficiariesRepository beneficiariesRepository,
    ITransfersRepository transfersRepository,
    ITransactionsRepository transactionsRepository,
    IDataContext dataContext
-): IUseCasesTransfer {
-
+) : IUseCasesTransfer {
    public async Task<ResultData<Transfer>> SendMoneyAsync(
-      Guid accountDebitId,         // Account from which the transfer is made (debit) 
-      Transfer transfer,           // Transfer data transferDto
+      Guid accountDebitId, // Account from which the transfer is made (debit) 
+      Transfer transfer, // Transfer data transferDto
       CancellationToken ctToken = default
-   ){
+   ) {
       try {
+         // check if transfer with transferDto.Id already exists
+         if (await transfersRepository.FindByIdAsync(transfer.Id, ctToken) != null)  
+            return new Error<Transfer>(400, "SendMoney: Transfer already exists.");
          
-         // check if debit account exists (Lastschrift)
-         var accountDebit = await accountsRepository.FindByIdAsync(accountDebitId, ctToken);
-         if(accountDebit == null)
-            return new Error<Transfer>(404,"Debit Account for the transfer doesn't exist.");
-         // overwrite transferDto with accountDebitId
-         //transfer.AccountId = accountDebitId;
+         // check if transfer.Beneficiary is givene
+         if (transfer.BeneficiaryId == null) 
+            return new Error<Transfer>(404, "SendMoney: BeneficiaryId for the transfer not given.");
+         
+         // validate data
+         var (accountDebit, accountCredit, beneficiary) = 
+            await ValidateAsync(accountDebitId, transfer, ctToken);
+
+         // Check if accountDebit, benficiary and accountCrdit exists 
+         if (accountDebit == null) return new Error<Transfer>(404, "SendMoney: Debit Account for the transfer doesn't exist.");
+         if (beneficiary == null) return new Error<Transfer>(404, "SendMoney: Beneficiary for the transfer doesn't exist.");
+         if (accountCredit == null) return new Error<Transfer>(404, "SendMoney: Credit Account for the transfer doesn't exist.");
+         
+         // // check if debit account exists (Lastschrift)
+         // var accountDebit = await accountsRepository.FindByIdAsync(
+         //    accountDebitId, ctToken);
+         // if (accountDebit == null) return new Error<Transfer>(
+         //    404, "Debit Account for the transfer doesn't exist.");
+         // transfer.SetAccount(accountDebit);
+         //
+         // // check if the benificiary exits
+         // if (transfer.BeneficiaryId == null) return new Error<Transfer>(
+         //    404, "BeneficiaryId for the transfer not given.");
+         // var beneficiary =
+         //    await beneficiariesRepository.FindByIdAsync((Guid)transfer.BeneficiaryId, ctToken);
+         // if (beneficiary == null)
+         //    return new Error<Transfer>(404, "Beneficiary for the transfer doesn't exist.");
+         //
+         // // check if credit account exists (Gutschrift)
+         // var accountCredit = await accountsRepository.FindByAsync(
+         //    a => a.Iban == beneficiary.Iban, ctToken);
+         // if (accountCredit == null) return new Error<Transfer>(
+         //    404, "Credit Account (Iban) for the transfer doesn't exist.");
+         //
+         //
+         // Transaction transactionDebit = new(
+         //    id: Guid.NewGuid(),
+         //    date: transfer.Date,
+         //    amount: -transfer.Amount
+         // );
+         // Transaction transactionCredit = new(
+         //    id: Guid.NewGuid(),
+         //    date: transfer.Date,
+         //    amount: +transfer.Amount
+         // );
+         
+         // Setup transfer and create transactions
          transfer.SetAccount(accountDebit);
-         
-         // check if the benificiary exits
-         if(transfer.BeneficiaryId == null) 
-            return new Error<Transfer>(404, "BeneficiaryId for the transfer not given.");
-         var beneficiary = 
-            await beneficiariesRepository.FindByIdAsync((Guid)transfer.BeneficiaryId, ctToken);
-         if(beneficiary == null) 
-            return new Error<Transfer>(404, "Beneficiary for the transfer doesn't exist.");
-      
-         // check if credit account exists (Gutschrift)
-         var accountCredit = 
-            await accountsRepository.FindByAsync(a => a.Iban == beneficiary.Iban, ctToken);
-         if(accountCredit == null)
-            return new Error<Transfer>(404, "Credit Account (Iban) for the transfer doesn't exist."); 
-         
-         // check if transfer with transferDto.Id exists
-         if(await transfersRepository.FindByIdAsync(transfer.Id, ctToken) != null)
-            return new Error<Transfer>(409, "Transfer already exists.");
-         
-         Transaction transactionDebit = new (
-            id: Guid.NewGuid(),
-            date: transfer.Date,
-            amount: -transfer.Amount,
-            null,
-            null
-         );
-         Transaction transactionCredit = new(
-            id: Guid.NewGuid(),
-            date: transfer.Date,
-            amount: +transfer.Amount,
-            null,
-            null
-         );
-         
-         // add transactions to transfer
-         transfer.Add(transactionDebit);
-         transfer.Add(transactionCredit);
+         var (transactionDebit, transactionCredit) = CreateTransactionsFromTransfer(transfer);
          
          // add transfer to debit account and beneficiary
          accountDebit.AddTransfer(transfer, beneficiary);
-         
-         // add transaction to debit account (Lastschrift)
+
+         // add transaction to transfer and debit account (Lastschrift)
          accountDebit.AddTransactions(transactionDebit, transfer, true);
-         // add transaction to credit account (Gutschrift)     
+         // add transaction to transfer and credit account (Gutschrift)     
          accountCredit.AddTransactions(transactionCredit, transfer, false);
 
-         // save to transfers-/transactionsRepository and write to database
+         // save to Transfers- and TransactionsRepository and write to database
          transfersRepository.Add(transfer);
-         transactionsRepository.Add(transactionDebit);
-         transactionsRepository.Add(transactionCredit);
-         await dataContext.SaveAllChangesAsync("Add Transfer with Transactions",ctToken);
+         await dataContext.SaveAllChangesAsync("Add Transfer with Transactions", ctToken);
 
          return new Success<Transfer>(201, transfer);
-         
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
          return new Error<Transfer>(500, e.Message);
       }
    }
+
+   private async Task<(Account,Account,Beneficiary)> ValidateAsync(
+      Guid accountId,
+      Transfer transfer,
+      CancellationToken ctToken
+   ) {
+      // check if debit account exists (Lastschrift)
+      var accountDebit = await accountsRepository.FindByIdAsync(
+         accountId, ctToken);
+      
+      // check if the benificiary exits
+      var beneficiary =
+         await beneficiariesRepository.FindByIdAsync((Guid)transfer.BeneficiaryId, ctToken);
+  
+      // check if credit account exists (Gutschrift)
+      var accountCredit = await accountsRepository.FindByAsync(
+         a => a.Iban == beneficiary.Iban, ctToken);
+
+      return (accountDebit, accountCredit, beneficiary);
+   }
+   
+   private (Transaction, Transaction) CreateTransactionsFromTransfer(Transfer transfer) {
+      Transaction transactionDebit = new(
+         id: Guid.NewGuid(),
+         date: transfer.Date,
+         amount: -transfer.Amount
+      );
+      Transaction transactionCredit = new(
+         id: Guid.NewGuid(),
+         date: transfer.Date,
+         amount: +transfer.Amount
+      );
+      return (transactionDebit, transactionCredit);
+   }
+
 
    public async Task<ResultData<Transfer>> ReverseMoneyAsync(
       Guid originalTransferId,
       Transfer reverseTransfer,
       CancellationToken ctToken = default
    ) {
-      
-      // check if original transfer exists
-      var originalTransfer = 
-         await transfersRepository.FindByIdAsync(originalTransferId, ctToken);
-      if(originalTransfer == null)
-         return new Error<Transfer>(404,"Reverse Money: Original transfer doesn't exist."); 
-      
-      // check if debit account exists (Lastschrift -> Gutschrift)
-      var accountDebit = 
-         await accountsRepository.FindByIdAsync(originalTransfer.AccountId,ctToken);
-      if(accountDebit == null)
-         return new Error<Transfer>(404,"Debit Account for the transfer doesn't exist."); 
+      try {
+         // check if original transfer exists
+         var transfer =
+            await transfersRepository.FindByIdAsync(originalTransferId, ctToken);
+         if (transfer == null) return new Error<Transfer>(404, "ReverseMoney: Original transfer doesn't exist.");
+         
+         // check if transfer.BeneficaryId exists
+         if (transfer.BeneficiaryId == null) return new Error<Transfer>(404, "ReverseMoney: BeneficiaryId for the transfer not given.");
+         
+         // validate data
+         var (accountDebit, accountCredit, beneficiary) = 
+            await ValidateAsync(transfer.AccountId, transfer, ctToken);
 
-      // check if beneficiary exists      
-      if(originalTransfer.BeneficiaryId == null)
-         return new Error<Transfer>(400,"Reverse Money: BeneficiaryId is null");
-      var beneficiaryId = (Guid) originalTransfer.BeneficiaryId!; // convert nullable to non-nullable
-      var beneficiary = 
-         await beneficiariesRepository.FindByIdAsync(beneficiaryId, ctToken);
-      if(beneficiary == null) 
-         return new Error<Transfer>(400,"Beneficiary for the transfer doesn't exist.");
-      
-      // check if credit account exists (Gutschrift -> Lastschrift)
-      var accountCredit = 
-         await accountsRepository.FindByAsync(a => a.Iban == beneficiary.Iban, ctToken);
-      if(accountCredit == null)
-         return new Error<Transfer>(404,"Credit Account (Iban) for the transfer doesn't exist.");
-      
-      // transactionDebit + transactionCredit should not be null 
-      var originalTransactions =
-          await transactionsRepository.FilterByTransferIdAsync(originalTransferId, ctToken);
-      if (originalTransactions.Count() != 2)
-          return new Error<Transfer>(404,"Reverse Money: Original transactions are not valid.");
-      // var originalTransactionDebit = originalTransactions.FirstOrDefault(t => t.Amount < 0.0);
-      // if(originalTransactionDebit == null)          
-      //    return new Error<Transfer>(404, "Reverse Money: Original debit transaction not found."); 
-      // var originalTransactionCredit = originalTransactions.FirstOrDefault(t => t.Amount >= 0.0);
-      // if(originalTransactionCredit == null) 
-      //    return new Error<Transfer>(404, "Reverse Money: Original credit transaction not found.");     
+         // Check if accountDebit, benficiary and accountCrdit exists 
+         if (accountDebit == null) return new Error<Transfer>(404, "ReversMoney: Debit Account for the transfer doesn't exist.");
+         if (beneficiary == null) return new Error<Transfer>(404, "ReverseMoney: Beneficiary for the transfer doesn't exist.");
+         if (accountCredit == null) return new Error<Transfer>(404, "ReverseMoney: Credit Account for the transfer doesn't exist.");
+         
+         // Setup transfer and create transactions
+         reverseTransfer.SetAccount(accountDebit);
+         var (reverseTransactionDebit, reverseTransactionCredit) = CreateTransactionsFromTransfer(reverseTransfer);
+         
+         // add transfer to debit account
+         accountDebit.AddTransfer(reverseTransfer, beneficiary);
+         
+         // add transactionDebit to debit account (Gutschrift)
+         accountDebit.AddTransactions(reverseTransactionDebit, reverseTransfer, true);    // use isDebit = true
+         // add transactionCredit to credit account (Lastschrift)     
+         accountCredit.AddTransactions(reverseTransactionCredit, reverseTransfer, false); // use isDebit = false
+         
+         // save to transfers-/transactionsRepository and write to database
+         transfersRepository.Add(reverseTransfer);
+         //transactionsRepository.Add(reverseTransactionDebit);
+         //transactionsRepository.Add(reverseTransactionCredit);
+         await dataContext.SaveAllChangesAsync("Add Transfer with Transactions", ctToken);
 
-      // Create two transactions
-      Transaction reverseTransactionDebit = new(
-         id: Guid.NewGuid(),
-         date: reverseTransfer.Date,
-         amount: +originalTransfer.Amount,
-         null,
-         null
-      );
-      Transaction reverseTransactionCredit = new(
-         id: Guid.NewGuid(),
-         date: reverseTransfer.Date,
-         amount: -originalTransfer.Amount,
-         null,
-         null
-      );
-      
-      // and add transfer to account
-      accountDebit.AddTransfer(reverseTransfer, beneficiary);
-      // Create transactionFrom (Original debit) - Lastschrift
-      accountDebit.AddTransactions(reverseTransactionDebit, reverseTransfer, false);
-      // Create transactionTo (Credit)  - Gutschrift     
-      accountCredit.AddTransactions(reverseTransactionCredit, reverseTransfer, true);       
-      
-      transfersRepository.Add(reverseTransfer);             
-      transactionsRepository.Add(reverseTransactionDebit);            
-      transactionsRepository.Add(reverseTransactionCredit);      
-      await dataContext.SaveAllChangesAsync("Add Transfer with Transactions",ctToken);     
-
-      return new Success<Transfer>(0,reverseTransfer);
+         return new Success<Transfer>(0, reverseTransfer);
+      }
+      catch (Exception e) {
+         return new Error<Transfer>(500, e.Message);
+      }
    }
+   
+   
+   
 }

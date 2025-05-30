@@ -73,19 +73,19 @@ public class OwnersRepository(
    //   WHERE a.OwnerId = id
    // ) AS accounts
    // ON owner.Id = accounts.OwnerId
-   public async Task<Owner?> FindByIdJoin2Async(
-      Guid id,
-      bool joinAccounts,
-      CancellationToken ctToken = default
-   ) {
-      var query = _dbSet.AsQueryable();
-      // Filtered include
-      if (joinAccounts) {
-         query = query.Include(owner => 
-               owner.Accounts.Where(account => account.OwnerId == id));
-      }
-      var owners = await query.FirstOrDefaultAsync(o => o.Id == id, ctToken);
-      _dataContext.LogChangeTracker($"{nameof(Owner)}: FindByIdJoin2Async");
-      return owners;
-   }
+   // public async Task<Owner?> FindByIdJoin2Async(
+   //    Guid id,
+   //    bool joinAccounts,
+   //    CancellationToken ctToken = default
+   // ) {
+   //    var query = _dbSet.AsQueryable();
+   //    // Filtered include
+   //    if (joinAccounts) {
+   //       query = query.Include(owner => 
+   //             owner.Accounts.Where(account => account.OwnerId == id));
+   //    }
+   //    var owners = await query.FirstOrDefaultAsync(o => o.Id == id, ctToken);
+   //    _dataContext.LogChangeTracker($"{nameof(Owner)}: FindByIdJoin2Async");
+   //    return owners;
+   // }
 }

@@ -12,6 +12,17 @@ public class TransfersControllerTest: BaseControllerTest {
    
 
    [Fact]
+   public async Task SelectAsyncTest() {
+      // Arrange
+      await _arrangeTest.ExampleAsync(_seed);
+      var expected = _seed.Transfers.Select(t => t.ToTransferDto()).ToList();
+      // Act
+      var actionResult = await _transfersController.GetAllAsync();
+      // Assert
+      THelper.IsEnumerableOk(actionResult!, expected);
+   }
+   
+   [Fact]
    public async Task GetByAccountIdAsyncTest() {
       // Arrange
       await _arrangeTest.ExampleAsync(_seed);

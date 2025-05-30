@@ -25,7 +25,7 @@ public class AccountsController(
    [EndpointSummary("Get all accounts")]
    [ProducesResponseType(StatusCodes.Status200OK)]
    [ProducesDefaultResponseType]
-   public async Task<ActionResult<AccountDto>> GetAllAsync(
+   public async Task<ActionResult<IEnumerable<AccountDto>>> GetAllAsync(
       CancellationToken ctToken = default
    ) {
       var accounts = await accountsRepository.SelectAsync(false, ctToken);

@@ -13,28 +13,14 @@ public class TransactionsRepository(
       Expression<Func<Transaction, bool>>? predicate,
       CancellationToken ctToken = default
    ) {
-      var query = _dbSet.AsQueryable()  // IQueryable<Transaction>
-         .Where(t => t.AccountId == accountId).AsQueryable()
-         .AsSplitQuery();
-      if(predicate is not null) query = query
-         .Where(predicate)
-         .AsSingleQuery();
+      var query = _dbSet  // IQueryable<Transaction>
+         .Where(t => t.AccountId == accountId);
+      if (predicate is not null)
+         query = query.Where(predicate);
       var transactions =  await query.ToListAsync(ctToken);
       _dataContext.LogChangeTracker($"{nameof(TransactionsRepository)}: FilterByAccountIdAsync");
       return transactions;
    }
-
-   public async Task<IEnumerable<Transaction>> FilterByTransferIdAsync(
-      Guid transferId,
-      CancellationToken ctToken = default
-   ){
-      var transactions = await _dbSet
-         .Where(transaction => transaction.TransferId == transferId)
-         .ToListAsync(ctToken);
-      _dataContext.LogChangeTracker($"{nameof(TransactionsRepository)}: SelectByTransferIdAsync");
-      return transactions;
-   }
-   
    
    public async Task<IEnumerable<TransactionListItemDto>> FilterListItemsByAccountIdAsync(
       Guid accountId,

@@ -10,8 +10,8 @@ namespace BankingApi.Controllers.V2;
 [ApiVersion("2.0")]
 
 [ApiController]
-[Consumes("application/json")] //default
-[Produces("application/json")] //default
+[Consumes("application/json")]
+[Produces("application/json")] 
 
 public class BeneficiariesController(
    IAccountsRepository accountsRepository,
@@ -24,7 +24,7 @@ public class BeneficiariesController(
    [EndpointSummary("Get all beneficiaries")]
    [ProducesResponseType(StatusCodes.Status200OK)]
    [ProducesDefaultResponseType]
-   public async Task<ActionResult<AccountDto>> GetAllAsync(
+   public async Task<ActionResult<IEnumerable<BeneficiaryDto>>> GetAllAsync(
       CancellationToken ctToken = default
    ) {
       var beneficiaries = await beneficiariesRepository.SelectAsync(false, ctToken);
