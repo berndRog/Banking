@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Globalization;
 namespace BankingApi.Core.Misc;
 
 public static class Utils {
@@ -32,7 +33,7 @@ public static class Utils {
       random.Next(0, 1000).ToString("D4") + " ";
 
    public static string As8(this Guid guid) => guid.ToString()[..8];
-}
+
 /*
  * IBAN (International Bank Account Number) is a standardized format for bank account numbers.
  * It consists of a country code, check digits, and a Basic Bank Account Number (BBAN).
@@ -144,4 +145,33 @@ public static class Utils {
 //       // 6) assemble final IBAN
 //       return country + check + bban;
 //    }
-// }
+
+   public static string ToIso8601UtcString(this DateTime dateTime) =>
+      dateTime.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+
+   public static string ToIso8601TzString(this DateTime dateTime, TimeZoneInfo tz) {
+      string formatString = "yyyy-MM-dd'T'HH:mm:sszzz"; 
+      var dateTimeOffset = new DateTimeOffset(dateTime, tz.GetUtcOffset(dateTime));
+      return dateTimeOffset.ToString("o");
+   }
+   
+   public static (bool, DateTime?, string?) EvalDateTime(string? date) {
+      // 1234567890
+      // YYYY-MM-dd
+      if(date == null || date.Length < 10) 
+         return (true, null, $"EvalDateTime: Date format not accepted: {date}");
+      
+      DateTime dateTime;
+      if (!DateTime.TryParseExact(
+         s: date,
+         format: "yyyy-MM-dd",
+         provider: CultureInfo.InvariantCulture,
+         style: DateTimeStyles.AdjustToUniversal,
+         result: out dateTime)
+      ) {
+         return (true, null, $"EvalDateTime: Date format not accepted: {date}");
+      }
+      return (false, dateTime.ToUniversalTime(), null);
+   }
+
+}

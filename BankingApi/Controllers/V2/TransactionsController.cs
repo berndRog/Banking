@@ -5,6 +5,7 @@ using BankingApi.Core;
 using BankingApi.Core.Dto;
 using BankingApi.Core.Dtos;
 using BankingApi.Core.Mapping;
+using BankingApi.Core.Misc;
 using Microsoft.AspNetCore.Mvc;
 namespace BankingApi.Controllers.V2;
 
@@ -27,6 +28,7 @@ public class TransactionsController(
       CancellationToken ctToken = default
    ) {
       var transactions = await transactionsRepository.SelectAsync(false, ctToken);
+      transactions = transactions.OrderBy(t => t.Date);
       return Ok(transactions.Select(transaction => transaction.ToTransactionDto()));
    }
    
@@ -51,9 +53,9 @@ public class TransactionsController(
 
       try {
          var dateTimeStart =
-            DateTime.ParseExact(start, "o", null, DateTimeStyles.RoundtripKind);
+            DateTime.Parse(start, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
          var dateTimeEnd = 
-            DateTime.ParseExact(end, "o", null, DateTimeStyles.RoundtripKind);
+            DateTime.Parse(end, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
          
          var transactionListItemDtos =
             await transactionsRepository.FilterListItemsByAccountIdAsync(
@@ -61,10 +63,12 @@ public class TransactionsController(
                t => t.Date >= dateTimeStart && t.Date <= dateTimeEnd,
                ctToken
             );
+         transactionListItemDtos = transactionListItemDtos
+            .OrderBy(t => t.Date);
          return Ok(transactionListItemDtos);  // result already is in DTO format
       }
-      catch {
-         return BadRequest($"Transaction: Error timestamp start:{start} end:{end}");
+      catch(Exception ex) {
+         return BadRequest($"Transaction: Error timestamp start:{start} end:{end}\n{ex.Message}");
       }
    }
    
@@ -82,10 +86,18 @@ public class TransactionsController(
       if(account == null)
          return BadRequest("Bad request: accountId does not exist.");
       try {
-         var dateTimeStart =
-            DateTime.ParseExact(start, "o", null, DateTimeStyles.RoundtripKind);
-         var dateTimeEnd = 
-            DateTime.ParseExact(end, "o", null, DateTimeStyles.RoundtripKind);
+         
+         var (errorStart, dateTimeStart, errorMessageStart) = Utils.EvalDateTime(start);
+         if(errorStart) return BadRequest(errorMessageStart);
+      
+         var (errorEnd, dateTimeEnd, errorMessageEnd) = Utils.EvalDateTime(end);
+         if(errorEnd) return BadRequest(errorMessageEnd);
+
+         
+         // var dateTimeStart =
+         //    DateTime.ParseExact(start, "o", null, DateTimeStyles.RoundtripKind);
+         // var dateTimeEnd = 
+         //    DateTime.ParseExact(end, "o", null, DateTimeStyles.RoundtripKind);
          var transactions =
             await transactionsRepository.FilterByAccountIdAsync(
                accountId,
@@ -97,22 +109,6 @@ public class TransactionsController(
       catch {
          return BadRequest($"Transaction: Fehler Zeitstempel start:{start} end:{end}");
       }
-      
-      /*
-      var (errorStart, dateTimeStart, errorMessageStart) = Utils.EvalDateTime(start);
-      if(errorStart) return BadRequest(errorMessageStart);
-      
-      var (errorEnd, dateTimeEnd, errorMessageEnd) = Utils.EvalDateTime(end);
-      if(errorEnd) return BadRequest(errorMessageEnd);
-
-      var transactions =
-         await transactionsRepository.FilterByAccountIdAsync(
-            accountId,
-            t => t.Date >= dateTimeStart && t.Date <= dateTimeEnd,
-            ctToken
-         );
-      return Ok(transactions.Select(transaction => transaction.ToTransactionDto()));
-      */
    }
 
    [HttpGet("transactions/{id:guid}")]
