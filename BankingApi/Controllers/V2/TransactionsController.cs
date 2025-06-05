@@ -32,7 +32,39 @@ public class TransactionsController(
       return Ok(transactions.Select(transaction => transaction.ToTransactionDto()));
    }
    
-   
+   [HttpGet("accounts/{accountId:guid}/transactions/filter")]
+   [EndpointSummary("Get transactions for an account  by accountId and time intervall start to end")]
+   [ProducesResponseType(StatusCodes.Status200OK)]
+   [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
+   public async Task<ActionResult<IEnumerable<TransactionDto>>> GetByAccountIdAsync(
+      [FromRoute] Guid accountId,
+      [FromQuery] string start,
+      [FromQuery] string end,
+      CancellationToken ctToken = default
+   ){
+      var account = await accountsRepository.FindByIdAsync(accountId, ctToken);
+      if(account == null)
+         return BadRequest("Bad request: accountId does not exist.");
+      try {
+         var (errorStart, dateTimeStart, errorMessageStart) = Utils.EvalDateTime(start);
+         if(errorStart) return BadRequest(errorMessageStart);
+      
+         var (errorEnd, dateTimeEnd, errorMessageEnd) = Utils.EvalDateTime(end);
+         if(errorEnd) return BadRequest(errorMessageEnd);
+
+         var transactions =
+            await transactionsRepository.FilterByAccountIdAsync(
+               accountId,
+               t => t.Date >= dateTimeStart && t.Date <= dateTimeEnd,
+               ctToken
+            );
+         return Ok(transactions.Select(transaction => transaction.ToTransactionDto()));
+      }
+      catch {
+         return BadRequest($"Transaction: Fehler Zeitstempel start:{start} end:{end}");
+      }
+   }
+
    [HttpGet("accounts/{accountId:guid}/transactions/listitems")]
    [EndpointSummary("Get transactionListItemDtos of an account by accountId and time intervall start to end")]
    [ProducesResponseType(StatusCodes.Status200OK)]
@@ -72,45 +104,6 @@ public class TransactionsController(
       }
    }
    
-   [HttpGet("accounts/{accountId:guid}/transactions/filter")]
-   [EndpointSummary("Get transactions for an account  by accountId and time intervall start to end")]
-   [ProducesResponseType(StatusCodes.Status200OK)]
-   [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
-   public async Task<ActionResult<IEnumerable<TransactionDto>>> GetByAccountIdAsync(
-      [FromRoute] Guid accountId,
-      [FromQuery] string start,
-      [FromQuery] string end,
-      CancellationToken ctToken = default
-   ){
-      var account = await accountsRepository.FindByIdAsync(accountId, ctToken);
-      if(account == null)
-         return BadRequest("Bad request: accountId does not exist.");
-      try {
-         
-         var (errorStart, dateTimeStart, errorMessageStart) = Utils.EvalDateTime(start);
-         if(errorStart) return BadRequest(errorMessageStart);
-      
-         var (errorEnd, dateTimeEnd, errorMessageEnd) = Utils.EvalDateTime(end);
-         if(errorEnd) return BadRequest(errorMessageEnd);
-
-         
-         // var dateTimeStart =
-         //    DateTime.ParseExact(start, "o", null, DateTimeStyles.RoundtripKind);
-         // var dateTimeEnd = 
-         //    DateTime.ParseExact(end, "o", null, DateTimeStyles.RoundtripKind);
-         var transactions =
-            await transactionsRepository.FilterByAccountIdAsync(
-               accountId,
-               t => t.Date >= dateTimeStart && t.Date <= dateTimeEnd,
-               ctToken
-            );
-         return Ok(transactions.Select(transaction => transaction.ToTransactionDto()));
-      }
-      catch {
-         return BadRequest($"Transaction: Fehler Zeitstempel start:{start} end:{end}");
-      }
-   }
-
    [HttpGet("transactions/{id:guid}")]
    [EndpointSummary("Get a transaction by Id")]
    [ProducesResponseType(StatusCodes.Status200OK)]

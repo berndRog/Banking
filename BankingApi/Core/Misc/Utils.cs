@@ -19,11 +19,11 @@ public static class Utils {
          "Iban is not valid. It must be 20-22 characters long and contain only digits and letters.");
       
       // if iban is not valid, create a new one
-      var random = new Random();
+      // var random = new Random();
       //     DEkk                           BBBB                    BBBB
-      return "DE" + Digits2(random) + " " + Digits4(random) + " " + Digits4(random) + " " +
+      // return "DE" + Digits2(random) + " " + Digits4(random) + " " + Digits4(random) + " " +
          // CCCC                    CCCC                   CC
-         Digits4(random) + " " + Digits4(random) + " " + Digits2(random);
+         // Digits4(random) + " " + Digits4(random) + " " + Digits2(random);
    }
 
    private static string Digits2(Random random) =>
@@ -146,15 +146,6 @@ public static class Utils {
 //       return country + check + bban;
 //    }
 
-   public static string ToIso8601UtcString(this DateTime dateTime) =>
-      dateTime.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
-
-   public static string ToIso8601TzString(this DateTime dateTime, TimeZoneInfo tz) {
-      string formatString = "yyyy-MM-dd'T'HH:mm:sszzz"; 
-      var dateTimeOffset = new DateTimeOffset(dateTime, tz.GetUtcOffset(dateTime));
-      return dateTimeOffset.ToString("o");
-   }
-   
    public static (bool, DateTime?, string?) EvalDateTime(string? date) {
       // 1234567890
       // YYYY-MM-dd

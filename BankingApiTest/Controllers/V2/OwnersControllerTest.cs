@@ -11,6 +11,7 @@ namespace BankingApiTest.Controllers.V2;
 [Collection(nameof(SystemTestCollectionDefinition))]
 public class OwnersControllerTest : BaseControllerTest {
    #region owners only
+   [Fact]
    public async Task GetAllAsyncTest() {
       // Arrange
       await _arrangeTest.ExampleAsync(_seed);

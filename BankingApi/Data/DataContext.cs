@@ -48,12 +48,10 @@ public class DataContext: DbContext, IDataContext {
          .EnableDetailedErrors();
    }
 
-   /*
+
    protected override void OnModelCreating(ModelBuilder modelBuilder) {
       
       base.OnModelCreating(modelBuilder);
-
-
       
       //
       // PROPERTY CONFIGURATION
@@ -62,143 +60,164 @@ public class DataContext: DbContext, IDataContext {
          e.ToTable("Owners"); // tablename Owners
          e.HasKey(owner => owner.Id); // primary key
          e.Property(owner => owner.Id) // primary key has type Guid
-            .ValueGeneratedNever(); // and should never be gerated by DB  
-         e.Property(owner => owner.Name).HasMaxLength(100);
-         e.Property(owner => owner.Email).HasMaxLength(200);
+            // Id is generated on Add, when not existing
+            .ValueGeneratedOnAdd()
+            .IsRequired(); 
+         e.Property(owner => owner.Name)
+            .IsRequired()
+            .HasMaxLength(100);
          e.Property(e => e.Birthdate)
             .HasConversion(
-               v => v, // to UTC before saving
+               v => v, // convert to UTC before saving
                v => DateTime.SpecifyKind(v, DateTimeKind.Utc)); // set as UTC when loading
-      });
+         e.Property(owner => owner.Email)
+            .IsRequired(false) // email is optional
+            .HasMaxLength(200);
+       });
       
       modelBuilder.Entity<Account>(e => {
          e.ToTable("Accounts");
          e.HasKey(account => account.Id);
-         e.Property(account => account.Id) 
-            .ValueGeneratedNever();        // Id should never be gerated by DB  
-         e.Property(account => account.Id).ValueGeneratedNever();
-         e.Property(account => account.Iban).HasMaxLength(32);
+         e.Property(account => account.Id)
+            .IsRequired()
+            // Id is generated on Add, when not existing
+            .ValueGeneratedOnAdd();
+         e.Property(account => account.Iban)
+            .IsRequired()
+            .HasMaxLength(22);
+         e.Property(account => account.Balance)
+            .IsRequired()
+            .HasPrecision(18, 2); // decimal with 18 digits and 2 decimal places
+         // navigation properties are defined later
       });
-
+      
       modelBuilder.Entity<Beneficiary>(e => {
          e.ToTable("Beneficiaries");
          e.HasKey(beneficiary => beneficiary.Id);
          e.Property(beneficiary => beneficiary.Id)
-            .ValueGeneratedNever();        // Id and should never be gerated by DB  
-         e.Property(beneficiary => beneficiary.Id).ValueGeneratedNever();
-         e.Property(beneficiary => beneficiary.Name).HasMaxLength(64);
-         e.Property(beneficiary => beneficiary.Iban).HasMaxLength(32);
+            .IsRequired()
+            .ValueGeneratedOnAdd();
+         e.Property(beneficiary => beneficiary.Name)
+            .IsRequired()
+            .HasMaxLength(100);
+         e.Property(beneficiary => beneficiary.Iban)
+            .IsRequired()
+            .HasMaxLength(22); 
+         // navigation properties are defined later
       });
-      
+
       modelBuilder.Entity<Transfer>(e => {
          e.ToTable("Transfers");
          e.HasKey(transfer => transfer.Id);
-         e.Property(beneficiary => beneficiary.Id)
-            .ValueGeneratedNever();        // Id and should never be gerated by DB  
-         e.Property(transfer => transfer.Id).ValueGeneratedNever();
+         e.Property(transfer => transfer.Id)
+            .IsRequired()
+            .ValueGeneratedOnAdd();
          e.Property(e => e.Date)
             .HasConversion(
-               v => v, // to UTC before saving
-               v => DateTime.SpecifyKind(v, DateTimeKind.Utc)); // set as UTC when loading
-      });
-      
-      modelBuilder.Entity<Transaction>(e => {
-         e.ToTable("Transactions");
-         e.HasKey(transaction => transaction.Id);
-         e.Property(transaction => transaction.Id)
-            .ValueGeneratedNever();
-         e.Property(e => e.Date)
-            .HasConversion(
-               v => v, // to UTC before saving
-               v => DateTime.SpecifyKind(v, DateTimeKind.Utc)); // set as UTC when loading
-      });
-      
-      
-      modelBuilder.Entity<Image>(entity => {
-         entity.Property(e => e.Updated)
-            .HasConversion(
-               v => v, // to UTC before saving
-               v => DateTime.SpecifyKind(v, DateTimeKind.Utc)); // set as UTC when loading
+               v => v, 
+               v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+         e.Property(transfer => transfer.Description)
+            .IsRequired()
+            .HasMaxLength(200);
+         e.Property(transfer => transfer.Amount)
+            .IsRequired()
+            .HasPrecision(18, 2); // decimal with 18 digits and 2 decimal places
+         // navigation properties are defined later
       });
 
+      modelBuilder.Entity<Transaction>(e => {
+         e.ToTable("Transactions"); 
+         e.HasKey(transaction => transaction.Id); 
+         e.Property(transaction => transaction.Id)
+            .ValueGeneratedOnAdd()
+            .IsRequired(); 
+         e.Property(e => e.Date)
+            .HasConversion(
+               v => v, 
+               v => DateTime.SpecifyKind(v, DateTimeKind.Utc)); 
+         e.Property(transfer => transfer.Amount)
+            .IsRequired()
+            .HasPrecision(18, 2); // decimal with 18 digits and 2 decimal places
+         // navigation properties are defined later
+      });
+      
       //
       // RELATIONS
       //
-      // One-to-Many: Owner (1,1):(0..n] Account 
-      // -------------------------------------------
+      // One-to-Many: Owner (1,1):(0:n] Account 
+      // --------------------------------------
       modelBuilder.Entity<Account>(e => {
-         e.HasOne(account => account.Owner)              // Account --> Owner   [1]
-            .WithMany(owner => owner.Accounts)           // Owner   --> Account [0..*]
-            .HasForeignKey(account => account.OwnerId)   // Fk in Account
-            .HasPrincipalKey(owner => owner.Id)          // Pk in Owner
-            .OnDelete(DeleteBehavior.Cascade)
+         e.HasOne(account => account.Owner)                       // Account --> Owner   (1,1)
+            .WithMany(owner => owner.Accounts)                    // Owner   --> Account (0:n)
+            .HasForeignKey(account => account.OwnerId)            // fk in Account
+            .HasPrincipalKey(owner => owner.Id)                   // pk in Owner
+            .OnDelete(DeleteBehavior.Cascade)                     // delete all accounts when owner is deleted
             .IsRequired();
-         e.Navigation(account => account.Owner);         // navigation property
+         e.Navigation(account => account.Owner);                  // navigation property
       });
       //
       // One-To-Many: Account (1,1):(0,n) Beneficiaries  
       // ---------------------------------------------------
       modelBuilder.Entity<Beneficiary>(e => {
-         e.HasOne<Account>(account => null)              // navigation property not modelled
-            .WithMany(account => account.Beneficiaries)  // Account     --> Beneficiary [0..*]
-            .HasForeignKey(beneficiary => beneficiary.AccountId) // Fk in Beneficiary
-            .HasPrincipalKey(account => account.Id)              // Pk in Account
-            .OnDelete(DeleteBehavior.Cascade)
+         e.HasOne<Account>()                                      // Beneficiary --> Account not modelled
+            .WithMany(account => account.Beneficiaries)           // Account     --> Beneficiary (0:n)
+            .HasForeignKey(beneficiary => beneficiary.AccountId)  // fk in Beneficiary
+            .HasPrincipalKey(account => account.Id)               // pk in Account
+            .OnDelete(DeleteBehavior.Cascade)                     // delete all beneficiaries when account is deleted
             .IsRequired();
-         //e.Navigation(beneficiary => beneficiary.Account); // no Navigation property
+         //e.Navigation(beneficiary => beneficiary.Account);      // no Navigation property
       });
-
       //
       // One-to-Many: Account (1,1): (0,n) Transfers 
       // ----------------------------------------------
       modelBuilder.Entity<Transfer>(e => {
-         e.HasOne(transfer => transfer.Account)          // Transfer --> Account [1]
-            .WithMany(account => account.Transfers)      // Account --> Transfer [0..*]
-            .HasForeignKey(transfer => transfer.AccountId) // Fk in Transfer
-            .HasPrincipalKey(account => account.Id)        // Pk in Account
-            .OnDelete(DeleteBehavior.Cascade)
-            .IsRequired(true);
-         e.Navigation(transfer => transfer.Account);     // Navigation property
+         e.HasOne(transfer => transfer.Account)                   // Transfer --> Account (1,1)
+            .WithMany(account => account.Transfers)               // Account --> Transfer (0:n)
+            .HasForeignKey(transfer => transfer.AccountId)        // fk in Transfer
+            .HasPrincipalKey(account => account.Id)               // pk in Account
+            .OnDelete(DeleteBehavior.Cascade)                     // delete all transfers when account is deleted
+            .IsRequired();
+         e.Navigation(transfer => transfer.Account);              // Navigation property
       });
-      
-      // Account [1] <--> [0..*] Transactions One-To-Many
+      //
+      // One-to-Many: Account (1,1): (0,n) Transactions
       // ------------------------------------------------
       modelBuilder.Entity<Transaction>(e => {
-         e.HasOne(transaction => transaction.Account) // Transaction --> Account [1]
-            .WithMany(account => account.Transactions)
-            .HasForeignKey(transaction => transaction.AccountId)
-            .HasPrincipalKey(account => account.Id)
-            .IsRequired(false);
+         e.HasOne(transaction => transaction.Account)             // Transaction --> Account (1,1)
+            .WithMany(account => account.Transactions)            // Account --> Transaction (0,n)
+            .HasForeignKey(transaction => transaction.AccountId)  // fk in Transaction
+            .HasPrincipalKey(account => account.Id)               // pk in Account
+            .OnDelete(DeleteBehavior.Cascade)                     // delete all transactions when account is deleted
+            .IsRequired();
          e.Navigation(transaction => transaction.Account);
       });
       //
-            // Transfer [--] <--> [0..1] Beneficiary
-            // ------------------------------------
-            modelBuilder.Entity<Transfer>(e => {
-               e.HasOne(transfer => transfer.Beneficiary) // Transfer    --> Beneficiary [0..1]
-                  .WithMany()                             // Beneficiary --> Transfer [--]
-                  .HasForeignKey(transfer => transfer.BeneficiaryId) // Fk in Transfer
-                  .HasPrincipalKey(beneficiary => beneficiary.Id)    // Pk in Beneficiary
-                  .IsRequired(false)
-                  .OnDelete(DeleteBehavior.NoAction);
-               e.Navigation(transfer => transfer.Beneficiary);
-            });
-            //
-            // Transaction [0..*] <--> [0..1] Transfer
-            // ---------------------------------------
-            modelBuilder.Entity<Transaction>(e => {
-               e.HasOne(transaction => transaction.Transfer)
-                  .WithMany(transfer => transfer.Transactions)
-                  .HasForeignKey(transaction => transaction.TransferId)
-                  .HasPrincipalKey(transfer => transfer.Id)
-                  .IsRequired(false)
-                  .HasPrincipalKey(transfer => transfer.Id)
-                  .OnDelete(DeleteBehavior.NoAction);
-               e.Navigation(transaction => transaction.Transfer);
-            });
-  
+      // ZeroOrOne-to-Conditional:  Beneficiary (0,1):(c) Transfer
+      // ---------------------------------------------------------
+      modelBuilder.Entity<Transfer>(e => {
+         e.HasOne(transfer => transfer.Beneficiary)               // Transfer    --> Beneficiary (0,1)
+            .WithMany()                                           // Beneficiary --> Transfer [c] not modelled
+            .HasForeignKey(transfer => transfer.BeneficiaryId)    // fk in Transfer
+            .HasPrincipalKey(beneficiary => beneficiary.Id)       // pk in Beneficiary
+            .IsRequired(false)                                    // Beneficiary is optional
+            .OnDelete(DeleteBehavior.NoAction);                   // no delete action when beneficiary is deleted
+         e.Navigation(transfer => transfer.Beneficiary);
+      });
+      //
+      // ZeroOrOne-To-Many: Transaction (0,2):(0,1) Transfer
+      // ---------------------------------------------------
+      modelBuilder.Entity<Transaction>(e => {
+         e.HasOne(transaction => transaction.Transfer)            // Transaction --> Transfer (0,1)
+            .WithMany(transfer => transfer.Transactions)          // Transfer    --> Transaction (0,n)
+            .HasForeignKey(transaction => transaction.TransferId) // fk in Transaction
+            .HasPrincipalKey(transfer => transfer.Id)             // pk in Transfer
+            .IsRequired(false)                                    // Transfer is optional
+            .OnDelete(DeleteBehavior.NoAction);                   // no delete action when transfer is deleted
+         e.Navigation(transaction => transaction.Transfer);
+      });
+
    }
-   */
+
    
    public async Task<bool> SaveAllChangesAsync(
       string? text = null,

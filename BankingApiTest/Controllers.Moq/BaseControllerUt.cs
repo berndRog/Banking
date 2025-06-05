@@ -49,7 +49,6 @@ public class BaseControllerUt {
          _mockAccountsRepository.Object,
          _mockBeneficiariesRepository.Object,
          _mockTransfersRepository.Object,
-         _mockTransactionsRepository.Object,
          _mockDataContext.Object
       );
       

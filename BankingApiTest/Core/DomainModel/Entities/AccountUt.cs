@@ -80,7 +80,7 @@ public class AccountUt {
       // Add
       _seed.Account1.AddTransfer(_seed.Transfer1, _seed.Beneficiary1);
       // Assert
-      Assert.Equal(1, _seed.Account1.Transfers.Count);
+      Assert.Single(_seed.Account1.Transfers);
       Assert.Equivalent(expected, _seed.Account1.Transfers);
    }
    #endregion
@@ -111,7 +111,7 @@ public class AccountUt {
       Assert.Equal(transfer.Amount, actualTransfer.Amount);
       Assert.Equal(transfer.AccountId, actualTransfer.AccountId);
       Assert.Equal(transfer.BeneficiaryId, actualTransfer.BeneficiaryId);
-      Assert.Equal(transfer.Transactions.Count, 2);
+      Assert.Equal(2, transfer.Transactions.Count);
       
       
       var actualTransactionDebit = accountDebit.Transactions[0];

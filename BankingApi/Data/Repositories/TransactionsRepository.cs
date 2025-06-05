@@ -27,30 +27,33 @@ public class TransactionsRepository(
       Expression<Func<Transaction, bool>>? predicate,
       CancellationToken ctToken = default
    ) {
-      // transaction for AccountId
-      var query = _dbSet.AsQueryable() // IQueryable<Transaction>
+      var query = _dbSet.AsQueryable()
          .Where(t => t.AccountId == accountId);
+      
       if (predicate is not null) 
          query = query.Where(predicate);
 
-      // transaction --> transfer --> beneficiary
-      var dtoQuery = query  // (t = transaction)
-         .Include(t => t.Transfer)
-         .Where(t => t.Transfer != null)  // Filter out null transfers before ThenInclude
-         .Include(t => t.Transfer!.Beneficiary)
-         .Select(t => new TransactionListItemDto(
-            t.Id,
-            t.Date,
-            t.Amount,
-            t.Transfer == null ? "" : t.Transfer.Description,
-            t.Transfer != null && t.Transfer.Beneficiary != null ? t.Transfer.Beneficiary.Name : "",
-            t.Transfer != null && t.Transfer.Beneficiary != null ? t.Transfer.Beneficiary.Iban : "",
-            t.AccountId,
-            t.TransferId ?? Guid.Empty
+      var dtoQuery = query                           // IQueryable<Transaction>
+         .Include(ta => ta.Transfer)                 // Include Transfers
+            .ThenInclude(tf => tf.Beneficiary)       // Include Beneficiary
+         .Select(ta => new TransactionListItemDto(
+            // Id, Date and Amount of Transaction
+            ta.Id,            
+            ta.Date,
+            ta.Amount,                           
+            // Description of transaction.Transfer
+            ta.Transfer == null ? "" : ta.Transfer.Description,  // description of transfer
+            // Name and Iban of transaction.Transfer.Beneficiary
+            ta.Transfer != null && ta.Transfer.Beneficiary != null ? ta.Transfer.Beneficiary.Name : "",
+            ta.Transfer != null && ta.Transfer.Beneficiary != null ? ta.Transfer.Beneficiary.Iban : "",
+            // AccountId and TransferdId of Transaction
+            ta.AccountId,
+            ta.TransferId ?? Guid.Empty
          ));
-      
+   
       var transactions = await dtoQuery.ToListAsync(ctToken);
       _dataContext.LogChangeTracker($"{nameof(Transaction)}: FilterListItemsByAccountIdAsync");
       return transactions;
    }
+   
 }

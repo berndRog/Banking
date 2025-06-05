@@ -5,7 +5,6 @@ public class UseCasesTransfer(
    IAccountsRepository accountsRepository,
    IBeneficiariesRepository beneficiariesRepository,
    ITransfersRepository transfersRepository,
-   ITransactionsRepository transactionsRepository,
    IDataContext dataContext
 ) : IUseCasesTransfer {
    public async Task<ResultData<Transfer>> SendMoneyAsync(
@@ -14,6 +13,24 @@ public class UseCasesTransfer(
       CancellationToken ctToken = default
    ) {
       try {
+         // // check if debit account exists (Lastschrift)
+         // var accountDebit = await accountsRepository.FindByIdAsync(
+         //    accountDebitId, ctToken);
+         // if (accountDebit == null) return new Error<Transfer>(404, "Debit Account not found.");
+         // transfer.SetAccount(accountDebit);
+         //
+         // // check if the benificiary exits
+         // if (transfer.BeneficiaryId == null) return new Error<Transfer>(404, "BeneficiaryId for the transfer not given.");
+         // var beneficiary =
+         //    await beneficiariesRepository.FindByIdAsync((Guid)transfer.BeneficiaryId, ctToken);
+         // if (beneficiary == null) return new Error<Transfer>(404, "Beneficiary not found.");
+         //
+         // // check if credit account exists (Gutschrift)
+         // var accountCredit = await accountsRepository.FindByAsync(
+         //    a => a.Iban == beneficiary.Iban, ctToken);
+         // if (accountCredit == null) return new Error<Transfer>(404, "Credit Account not found.");
+         //
+         
          // check if transfer with transferDto.Id already exists
          if (await transfersRepository.FindByIdAsync(transfer.Id, ctToken) != null)  
             return new Error<Transfer>(400, "SendMoney: Transfer already exists.");
@@ -27,32 +44,10 @@ public class UseCasesTransfer(
             await ValidateAsync(accountDebitId, transfer, ctToken);
 
          // Check if accountDebit, benficiary and accountCrdit exists 
-         if (accountDebit == null) return new Error<Transfer>(404, "SendMoney: Debit Account for the transfer doesn't exist.");
-         if (beneficiary == null) return new Error<Transfer>(404, "SendMoney: Beneficiary for the transfer doesn't exist.");
-         if (accountCredit == null) return new Error<Transfer>(404, "SendMoney: Credit Account for the transfer doesn't exist.");
+         if (accountDebit == null) return new Error<Transfer>(404, "SendMoney: Debit Account not found.");
+         if (beneficiary == null) return new Error<Transfer>(404, "SendMoney: Beneficiary not found.");
+         if (accountCredit == null) return new Error<Transfer>(404, "SendMoney: Credit Account not found.");
          
-         // // check if debit account exists (Lastschrift)
-         // var accountDebit = await accountsRepository.FindByIdAsync(
-         //    accountDebitId, ctToken);
-         // if (accountDebit == null) return new Error<Transfer>(
-         //    404, "Debit Account for the transfer doesn't exist.");
-         // transfer.SetAccount(accountDebit);
-         //
-         // // check if the benificiary exits
-         // if (transfer.BeneficiaryId == null) return new Error<Transfer>(
-         //    404, "BeneficiaryId for the transfer not given.");
-         // var beneficiary =
-         //    await beneficiariesRepository.FindByIdAsync((Guid)transfer.BeneficiaryId, ctToken);
-         // if (beneficiary == null)
-         //    return new Error<Transfer>(404, "Beneficiary for the transfer doesn't exist.");
-         //
-         // // check if credit account exists (Gutschrift)
-         // var accountCredit = await accountsRepository.FindByAsync(
-         //    a => a.Iban == beneficiary.Iban, ctToken);
-         // if (accountCredit == null) return new Error<Transfer>(
-         //    404, "Credit Account (Iban) for the transfer doesn't exist.");
-         //
-         //
          // Transaction transactionDebit = new(
          //    id: Guid.NewGuid(),
          //    date: transfer.Date,
@@ -78,6 +73,8 @@ public class UseCasesTransfer(
 
          // save to Transfers- and TransactionsRepository and write to database
          transfersRepository.Add(transfer);
+         //transactionsRepository.Add(transactionDebit);  // this is done by EFCore
+         //transactionsRepository.Add(transactionCredit); // this is done by EFCore
          await dataContext.SaveAllChangesAsync("Add Transfer with Transactions", ctToken);
 
          return new Success<Transfer>(201, transfer);
@@ -87,7 +84,7 @@ public class UseCasesTransfer(
       }
    }
 
-   private async Task<(Account,Account,Beneficiary)> ValidateAsync(
+   private async Task<(Account?,Account?,Beneficiary?)> ValidateAsync(
       Guid accountId,
       Transfer transfer,
       CancellationToken ctToken
@@ -98,7 +95,9 @@ public class UseCasesTransfer(
       
       // check if the benificiary exits
       var beneficiary =
-         await beneficiariesRepository.FindByIdAsync((Guid)transfer.BeneficiaryId, ctToken);
+         await beneficiariesRepository.FindByIdAsync((Guid)transfer.BeneficiaryId!, ctToken);
+      if(beneficiary == null) 
+         return (accountDebit, null, null); // Beneficiary not found, return nulls
   
       // check if credit account exists (Gutschrift)
       var accountCredit = await accountsRepository.FindByAsync(
