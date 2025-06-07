@@ -6,7 +6,7 @@ public interface IAccountsRepository: IBaseRepository<Account,Guid> {
       Guid ownerId,
       CancellationToken ctToken = default 
    );
-      
+   
    Task<Account?> FindByIdJoinAsync(
       Guid id,
       bool join = true,

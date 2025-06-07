@@ -35,7 +35,7 @@ public class TransactionsRepository(
 
       var dtoQuery = query                           // IQueryable<Transaction>
          .Include(ta => ta.Transfer)                 // Include Transfers
-            .ThenInclude(tf => tf.Beneficiary)       // Include Beneficiary
+            .ThenInclude(tf => tf!.Beneficiary)       // Include Beneficiary
          .Select(ta => new TransactionListItemDto(
             // Id, Date and Amount of Transaction
             ta.Id,            

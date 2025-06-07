@@ -203,8 +203,8 @@ public class Seed {
       );
       Beneficiary9 = new Beneficiary(
          id: new Guid("00900000-0000-0000-0000-000000000000"),
-         name: Owner6.Name,
-         iban: Account8.Iban
+         name: Owner5.Name,
+         iban: Account7.Iban
       );
       Beneficiary10 = new Beneficiary(
          id: new Guid("01000000-0000-0000-0000-000000000000"),
@@ -277,7 +277,7 @@ public class Seed {
          id: new Guid("00100000-0000-0000-0000-000000000000"),
          date: new DateTime(2023, 10, 01, 17, 00, 00).ToUniversalTime(),
          description: "Benno an Erika1",
-         amount: 398.0m
+         amount: 412.0m
       );
       Transfer11 = new Transfer(
          id: new Guid("00110000-0000-0000-0000-000000000000"),
@@ -465,21 +465,22 @@ public class Seed {
    }
 
    public Seed InitTransfersTransactions(){
-      // Transaction
-      SendMoney(Account1, Beneficiary1, Account6, Transfer1, Transaction1, Transaction2); // From Account 1
-      SendMoney(Account1, Beneficiary2, Account7, Transfer2, Transaction3, Transaction4);
-      SendMoney(Account2, Beneficiary3, Account4, Transfer3, Transaction5, Transaction6); // From Account 2
-      SendMoney(Account2, Beneficiary4, Account5, Transfer4, Transaction7, Transaction8);
-
-      SendMoney(Account3, Beneficiary5, Account4, Transfer5, Transaction9, Transaction10); // From Account 3
-      SendMoney(Account3, Beneficiary6, Account5, Transfer6, Transaction11, Transaction12);
-      SendMoney(Account3, Beneficiary7, Account8, Transfer7, Transaction13, Transaction14);
-
-      SendMoney(Account4, Beneficiary8, Account3, Transfer8, Transaction15, Transaction16); // From Account 4
-      SendMoney(Account4, Beneficiary9, Account8, Transfer9, Transaction17, Transaction18);
-
-      SendMoney(Account5, Beneficiary10, Account1, Transfer10, Transaction19, Transaction20); // From Account 5
-      SendMoney(Account5, Beneficiary11, Account2, Transfer11, Transaction21, Transaction22);
+      // Traansfer 1-4
+      SendMoney(Account1, Beneficiary1, Transfer1, Transaction1, Transaction2); // From Account 1
+      SendMoney(Account1, Beneficiary2, Transfer2, Transaction3, Transaction4);
+      SendMoney(Account2, Beneficiary3, Transfer3, Transaction5, Transaction6); // From Account 2
+      SendMoney(Account2, Beneficiary4, Transfer4, Transaction7, Transaction8);
+      // Transfers 5-7
+      SendMoney(Account3, Beneficiary5, Transfer5, Transaction9, Transaction10); // From Account 3
+      SendMoney(Account3, Beneficiary6, Transfer6, Transaction11, Transaction12);
+      SendMoney(Account3, Beneficiary7, Transfer7, Transaction13, Transaction14);
+      // Transfers 8-9
+      SendMoney(Account4, Beneficiary8, Transfer8, Transaction15, Transaction16); // From Account 4
+      // hier titt der fehler auf
+      SendMoney(Account4, Beneficiary9, Transfer9, Transaction17, Transaction18);
+      // Transfers 10-11
+      SendMoney(Account5, Beneficiary10, Transfer10, Transaction19, Transaction20); // From Account 5
+      SendMoney(Account5, Beneficiary11, Transfer11, Transaction21, Transaction22);
 
       return this;
    }
@@ -487,16 +488,27 @@ public class Seed {
    public void SendMoney(
       Account accountDebit,
       Beneficiary beneficiary,
-      Account accountCredit,
       Transfer transfer,
       Transaction transactionDebit,
       Transaction transactionCredit
-   ){
+   ) {
+      var accountCredit = Accounts.Find(a => a.Iban == beneficiary.Iban);
+      if (accountCredit == null) {
+         throw new ArgumentException("Account for beneficiary not found: " + beneficiary.Iban);
+      }
+      
       accountDebit.AddTransfer(transfer, beneficiary);
+      
       transactionDebit.Set(accountDebit, transfer, true);
-      transactionCredit.Set(accountCredit, transfer, true);
-      transactionDebit?.Account?.AddTransactions(transactionDebit, transfer, true);
-      transactionCredit?.Account?.AddTransactions(transactionCredit, transfer, false);
+      transactionCredit.Set(accountCredit, transfer, false);
+      
+//      transactionDebit?.Account?.AddTransactions(transactionDebit, transfer, true);
+//      transactionCredit?.Account?.AddTransactions(transactionCredit, transfer, false);
+      // add transaction to transfer and debit account (Lastschrift)
+      accountDebit.AddTransactions(transactionDebit, transfer, true);
+      // add transaction to transfer and credit account (Gutschrift)     
+      accountCredit.AddTransactions(transactionCredit, transfer, false);
+
    }
 
    public void PrepareTest1(){ 
@@ -516,8 +528,7 @@ public class Seed {
       // AccountDebit
       Account1.AddBeneficiary(Beneficiary1);
       
-      SendMoney(Account1, Beneficiary1, Account6,
-         Transfer1, Transaction1, Transaction2); 
+      SendMoney(Account1, Beneficiary1, Transfer1, Transaction1, Transaction2); 
    }
    
    public void PrepareExample1WithReverse(DateTime reverseDate){
@@ -559,8 +570,7 @@ public class Seed {
       Owner1.AddAccount(Account1);
       Owner5.AddAccount(Account6);
       Account1.AddBeneficiary(Beneficiary1); // beneficiary 1 for account 1
-      SendMoney(Account1, Beneficiary1, Account6,
-         Transfer1, Transaction1, Transaction2); // From Account 1
+      SendMoney(Account1, Beneficiary1, Transfer1, Transaction1, Transaction2); // From Account 1
    }
 
    // public void Example2(){

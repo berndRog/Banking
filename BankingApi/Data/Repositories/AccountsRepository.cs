@@ -1,4 +1,5 @@
-﻿using BankingApi.Core;
+﻿using System.Collections;
+using BankingApi.Core;
 using BankingApi.Core.DomainModel.Entities;
 using Microsoft.EntityFrameworkCore;
 namespace BankingApi.Data.Repositories;
@@ -17,7 +18,7 @@ public class AccountsRepository(
       _dataContext.LogChangeTracker("{nameOf(Account).Name}: SelectByOwnerIdAsync");
       return accounts;
    }
-   
+
    public async Task<Account?> FindByIdJoinAsync(
       Guid id,
       bool join,

@@ -5,7 +5,6 @@ using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using BankingApi.Core.DomainModel.Entities;
-using BankingApi.Core.Dto;
 using BankingApi.Core.Mapping;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
@@ -35,7 +34,7 @@ public class TransfersControllerUt : BaseControllerUt {
       var actionResult = await _transfersController.GetByAccountIdAsync(id);
 
       // Assert
-      THelper.IsOk(actionResult, expected);
+      THelper.IsEnumerableOk(actionResult, expected);
    }
    
    [Fact]
@@ -124,7 +123,7 @@ public class TransfersControllerUt : BaseControllerUt {
       var actionResult = await _transfersController.SendMoneyAsync(accountDebit.Id, expected);
 
       // Assert
-      Assert.IsType<BadRequestObjectResult>(actionResult.Result);
+      Assert.IsType<NotFoundObjectResult>(actionResult.Result);
    }
 
    [Fact]

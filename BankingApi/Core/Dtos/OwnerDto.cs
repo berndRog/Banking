@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-namespace BankingApi.Core.Dto;
+namespace BankingApi.Core.Dtos;
 
 public record OwnerDto(
    Guid Id,

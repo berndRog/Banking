@@ -83,8 +83,8 @@ public class DataContext: DbContext, IDataContext {
             // Id is generated on Add, when not existing
             .ValueGeneratedOnAdd();
          e.Property(account => account.Iban)
-            .IsRequired()
-            .HasMaxLength(22);
+            .IsRequired();
+         // .HasMaxLength(22);
          e.Property(account => account.Balance)
             .IsRequired()
             .HasPrecision(18, 2); // decimal with 18 digits and 2 decimal places
@@ -101,8 +101,8 @@ public class DataContext: DbContext, IDataContext {
             .IsRequired()
             .HasMaxLength(100);
          e.Property(beneficiary => beneficiary.Iban)
-            .IsRequired()
-            .HasMaxLength(22); 
+            .IsRequired();
+         //.HasMaxLength(22); 
          // navigation properties are defined later
       });
 

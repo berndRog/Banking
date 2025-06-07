@@ -1,7 +1,7 @@
 ﻿using Asp.Versioning;
 using BankingApi.Core;
 using BankingApi.Core.DomainModel.Entities;
-using BankingApi.Core.Dto;
+using BankingApi.Core.Dtos;
 using BankingApi.Core.Mapping;
 using Microsoft.AspNetCore.Mvc;
 namespace BankingApi.Controllers.V2;
@@ -36,14 +36,10 @@ public class TransfersController(
    ) {
       var account = await accountsRepository.FindByIdAsync(accountId, ctToken);
       if (account == null)
-         return BadRequest("Bad request: accountId does not exist.");
-
-      //var transfers =
-      //   await transfersRepository.FilterByAccountIdJoinTransactionsAsync(accountId, ctToken);
+         return NotFound("Transfer GetByAccountId: accountId not found.");
 
       var transfers = 
          await transfersRepository.FilterByAsync(t => t.AccountId == accountId, ctToken);
-      
       
       return Ok(transfers.Select(transfer => transfer.ToTransferDto()));
    }
@@ -58,7 +54,7 @@ public class TransfersController(
    ) {
       return await transfersRepository.FindByIdAsync(id, ctToken) switch {
          { } transfer => Ok(transfer.ToTransferDto()),
-         null => NotFound("Transfer with given id not found.")
+         null => NotFound("Transfer GetById: given id not found.")
       };
    }
 
@@ -72,6 +68,11 @@ public class TransfersController(
       [FromBody] TransferDto transferDto,
       CancellationToken ctToken = default
    ) {
+      
+      var account = await accountsRepository.FindByIdAsync(accountId, ctToken);
+      if (account == null)
+         return NotFound("Transfer SendMoney: accountId not found");
+      
       var transfer = transferDto.ToTransfer();
 
       // send money, i.e. create transfer and two transactions
@@ -110,10 +111,15 @@ public class TransfersController(
       [FromBody] TransferDto reverseTransferDto,
       CancellationToken ctToken = default
    ) {
+      
+      var account = await accountsRepository.FindByIdAsync(accountId, ctToken);
+      if (account == null)
+         return NotFound("Transfer ReverseMoney: AccountId not found");
+      
       var originalTransfer =
          await transfersRepository.FindByIdAsync(originalTransferId, ctToken);
       if (originalTransfer == null)
-         return NotFound("Original transfer not found.");
+         return NotFound("Transfer ReverseMoney: Original transfer not found.");
 
       var reverseTransfer = new Transfer(
          id: Guid.NewGuid(),

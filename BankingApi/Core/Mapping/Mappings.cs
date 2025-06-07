@@ -1,5 +1,5 @@
 ﻿using BankingApi.Core.DomainModel.Entities;
-using BankingApi.Core.Dto;
+using BankingApi.Core.Dtos;
 using BankingApi.Core.Misc;
 namespace BankingApi.Core.Mapping;
 

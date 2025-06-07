@@ -10,7 +10,6 @@ public class ArrangeTest(
    IAccountsRepository accountsRepository,
    IBeneficiariesRepository beneficiariesRepository,
    ITransfersRepository transfersRepository,
-   ITransactionsRepository transactionsRepository,
    IDataContext dataContext,
    IUseCasesTransfer useCasesTransfer
 ) {
@@ -176,7 +175,7 @@ public class ArrangeTest(
       
       seed.InitTransfersTransactions();
       transfersRepository.AddRange(seed.Transfers);
-      transactionsRepository.AddRange(seed.Transactions);
+      //transactionsRepository.AddRange(seed.Transactions);
       await dataContext.SaveAllChangesAsync("Add Transfers with Transactions");
 
       dataContext.ClearChangeTracker();      

@@ -1,7 +1,7 @@
 ﻿using System.Net.Mime;
 using Asp.Versioning;
 using BankingApi.Core;
-using BankingApi.Core.Dto;
+using BankingApi.Core.Dtos;
 using BankingApi.Core.Mapping;
 using BankingApi.Core.Misc;
 using Microsoft.AspNetCore.Mvc;
@@ -36,13 +36,14 @@ public class BeneficiariesController(
    [EndpointSummary("Get beneficiaries of an account by accountId")]
    [Produces(MediaTypeNames.Application.Json)]
    [ProducesResponseType(StatusCodes.Status200OK)]
+   [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
    public async Task<ActionResult<IEnumerable<BeneficiaryDto>>> GetByAccountIdAsync(
       [FromRoute] Guid accountId,
       CancellationToken ctToken = default
    ){
       var account = await accountsRepository.FindByIdAsync(accountId, ctToken);
       if(account == null)
-         return BadRequest("Bad request: accountId does not exist.");
+         return NotFound("AccountId does not exist.");
 
       var beneficiaries =
          await beneficiariesRepository.SelectByAccountIdAsync(accountId, ctToken);
@@ -89,23 +90,26 @@ public class BeneficiariesController(
       [FromRoute] string iban,
       CancellationToken ctToken = default
    ){
-      // Find beneficiaries by SQL like %name%
-      var beneficiary = await beneficiariesRepository.FindByAsync(b=> b.Iban == iban, ctToken);
-      if(beneficiary == null)   
-         return NotFound("Beneficiary with given Iban not found");
-      
-      return Ok(beneficiary.ToBeneficiaryDto());
+      // Find beneficiaries by Iban
+      iban = iban.Replace(" ", "").ToUpper();
+      var beneficiaries = await beneficiariesRepository.FilterByAsync(b => b.Iban == iban, ctToken);
+      return Ok(beneficiaries.Select(b => b.ToBeneficiaryDto()));
    }
    
-   [HttpPost("accounts/{accountDebitId:guid}/beneficiaries")]
+   [HttpPost("accounts/{accountId:guid}/beneficiaries")]
    [EndpointSummary("Create a new beneficiary")]
    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, "application/problem+json")]
    public async Task<ActionResult<BeneficiaryDto?>> CreateAsync(
-      [FromRoute] Guid accountDebitId,
+      [FromRoute] Guid accountId,
       [FromBody] BeneficiaryDto beneficiaryDto,
       CancellationToken ctToken = default
    ){
+      // Debit account
+      var accountDebit = await accountsRepository.FindByIdAsync(accountId, ctToken);
+      if(accountDebit == null)
+         return NotFound("Beneficiary: Debit accountId not found.");
+      
       // Trim Iban and Check if Iban is valid
       beneficiaryDto = beneficiaryDto with { Iban = Utils.CheckIban(beneficiaryDto.Iban) };
       
@@ -122,11 +126,6 @@ public class BeneficiariesController(
       // check if account with given Iban exists
       if(accountCredit == null)
           return NotFound("Beneficiary: Credit account with given Iban not found");
-      
-      // Debit account
-      var accountDebit = await accountsRepository.FindByIdAsync(accountDebitId, ctToken);
-      if(accountDebit == null)
-         return NotFound("Beneficiary: Debit accountId not found.");
       
       // Domain model
       var beneficiary = beneficiaryDto.ToBeneficiary();

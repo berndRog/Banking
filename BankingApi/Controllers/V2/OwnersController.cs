@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using Asp.Versioning;
 using BankingApi.Core;
-using BankingApi.Core.Dto;
+using BankingApi.Core.Dtos;
 using BankingApi.Core.Mapping;
 using Microsoft.AspNetCore.Mvc;
 namespace BankingApi.Controllers.V2;

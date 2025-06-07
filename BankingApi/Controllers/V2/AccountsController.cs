@@ -2,7 +2,7 @@
 using System.Net.Mime;
 using Asp.Versioning;
 using BankingApi.Core;
-using BankingApi.Core.Dto;
+using BankingApi.Core.Dtos;
 using BankingApi.Core.Mapping;
 using BankingApi.Core.Misc;
 using Microsoft.AspNetCore.Mvc;
@@ -80,7 +80,6 @@ public class AccountsController(
          null => NotFound("Account with given Iban not found")
       };
    }
-
    
    [HttpPost("owners/{ownerId:guid}/accounts")]
    [EndpointSummary("Create a new account for a given ownerId")]
@@ -97,6 +96,7 @@ public class AccountsController(
       // check if accountDto.Id is empty
       if (accountDto.Id == Guid.Empty)
          accountDto = accountDto with { Id = Guid.NewGuid() };
+
       // check if account with given Id already exists
       if (await accountsRepository.FindByIdAsync(accountDto.Id, ctToken) != null)
          return BadRequest("Create Account: Account with given id already exists.");
@@ -107,7 +107,7 @@ public class AccountsController(
          return BadRequest("Create Account: Owner for account doesn't exists.");
       
       // DomainModel
-      var account = accountDto.ToAccount();
+      var account = accountDto.ToAccount();  // check iban
       owner.AddAccount(account);
       // save to repository and write to database 
       accountsRepository.Add(account);

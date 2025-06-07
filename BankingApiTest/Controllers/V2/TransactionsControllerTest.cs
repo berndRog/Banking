@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using BankingApi.Core.Dto;
 using Xunit;
 namespace BankingApiTest.Controllers.V2;
 [Collection(nameof(SystemTestCollectionDefinition))]

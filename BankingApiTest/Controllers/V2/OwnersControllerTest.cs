@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using BankingApi.Core.Dto;
+using BankingApi.Core.Dtos;
 using BankingApi.Core.Mapping;
 using Microsoft.AspNetCore.Mvc;
 using Xunit;
@@ -12,7 +12,7 @@ namespace BankingApiTest.Controllers.V2;
 public class OwnersControllerTest : BaseControllerTest {
    #region owners only
    [Fact]
-   public async Task GetAllAsyncTest() {
+   public async Task GetOwnersAsyncTest() {
       // Arrange
       await _arrangeTest.ExampleAsync(_seed);
       var expected = _seed.Owners.Select(t => t.ToOwnerDto()).ToList();

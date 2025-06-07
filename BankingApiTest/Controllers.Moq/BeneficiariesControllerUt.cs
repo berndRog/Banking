@@ -5,7 +5,6 @@ using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using BankingApi.Core.DomainModel.Entities;
-using BankingApi.Core.Dto;
 using BankingApi.Core.Mapping;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
@@ -144,7 +143,7 @@ public class BeneficiariesControllerUt : BaseControllerUt {
       var actionResult = await _beneficiariesController.CreateAsync(_seed.Account1.Id, beneficiary1Dto);
 
       // Assert
-      Assert.IsType<BadRequestObjectResult>(actionResult.Result);
+      Assert.IsType<NotFoundObjectResult>(actionResult.Result);
    }
 
    [Fact]

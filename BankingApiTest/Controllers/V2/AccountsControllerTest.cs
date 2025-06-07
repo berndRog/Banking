@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using BankingApi.Core.Dto;
+using BankingApi.Core.Dtos;
 using BankingApi.Core.Mapping;
 using Microsoft.AspNetCore.Mvc;
 using Xunit;
@@ -11,7 +11,7 @@ public class AccountsControllerTest: BaseControllerTest {
 
    #region Accounts<->Owners
    [Fact]
-   public async Task GetAllAsyncTest() {
+   public async Task GetAccountsAsyncTest() {
       // Arrange
       await _arrangeTest.OwnersWithAccountsAsync(_seed);
       var expected = _seed.Accounts.Select(t => t.ToAccountDto()).ToList();
@@ -70,10 +70,11 @@ public class AccountsControllerTest: BaseControllerTest {
       // Assert
       THelper.IsCreated(actionResult, expected);
    }
+   #endregion
    
-   
+   #region Accounts with all references
    [Fact]
-   public async Task DeleteTest() {
+   public async Task DeleteCascadingTest() {
       // Arrange
       await _arrangeTest.ExampleAsync(_seed);
       // Act

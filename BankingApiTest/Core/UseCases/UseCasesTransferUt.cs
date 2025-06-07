@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using BankingApi.Core;
 using BankingApi.Core.DomainModel.Entities;
-using BankingApi.Core.Dto;
+using BankingApi.Core.Dtos;
 using BankingApi.Core.Mapping;
 using BankingApiTest.Persistence.Repositories;
 using Xunit;
@@ -129,4 +129,25 @@ public class UseCasesTransferUt : BaseRepositoryUt {
 
    }
 
+   [Fact]
+   public async Task SendMoneyAsyncAllTestCasesUt() {
+      
+      // Arrange
+      await _arrangeTest.ExampleAsync(_seed);
+      
+      // Act
+      var accounts = await _accountsRepository.SelectAsync(true);
+      
+      // Assert with results after Testfall 11
+      Assert.NotNull(accounts);
+      Assert.Equal(8, accounts.Count());
+      Assert.Equal(1936.0m, accounts.FirstOrDefault(a => a.Id == _seed.Account1.Id)!.Balance);
+      Assert.Equal(1675.0m, accounts.FirstOrDefault(a => a.Id == _seed.Account2.Id)!.Balance);
+      Assert.Equal(2510.0m, accounts.FirstOrDefault(a => a.Id == _seed.Account3.Id)!.Balance);
+      Assert.Equal(2322.0m, accounts.FirstOrDefault(a => a.Id == _seed.Account4.Id)!.Balance);
+      Assert.Equal(1813.0m, accounts.FirstOrDefault(a => a.Id == _seed.Account5.Id)!.Balance);
+      Assert.Equal(3845.0m, accounts.FirstOrDefault(a => a.Id == _seed.Account6.Id)!.Balance);
+      Assert.Equal(3687.0m, accounts.FirstOrDefault(a => a.Id == _seed.Account7.Id)!.Balance);
+      Assert.Equal(4612.0m, accounts.FirstOrDefault(a => a.Id == _seed.Account8.Id)!.Balance);
+   }
 }
